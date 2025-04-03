@@ -81,14 +81,70 @@
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth;
+  }
+
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "ss01", "ss02", "cv01", "cv02", "cv03";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Improved focus styles for accessibility */
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-primary;
+  }
+
+  /* Skip to content link for keyboard users */
+  .skip-to-content {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-background focus:text-foreground focus:shadow-md focus:rounded-md;
   }
 
   .glass-card {
     @apply bg-white/90 backdrop-blur-sm shadow-sm border border-white/10;
+  }
+  
+  /* Mobile optimizations */
+  @media (max-width: 640px) {
+    html {
+      font-size: 14px;
+    }
+  }
+  
+  /* Reduced motion preference support */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
+  /* Content-visibility for better rendering performance */
+  .content-visibility-auto {
+    content-visibility: auto;
+  }
+}
+
+/* Utility classes for loading and animation optimizations */
+@layer utilities {
+  .animate-once {
+    animation-iteration-count: 1;
+  }
+  
+  .animate-twice {
+    animation-iteration-count: 2;
+  }
+  
+  .will-change-transform {
+    will-change: transform;
+  }
+  
+  .hardware-accelerated {
+    transform: translateZ(0);
   }
 }
