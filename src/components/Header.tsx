@@ -1,8 +1,8 @@
 
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { mockUser } from '@/data/mockData';
 import { Bell, Menu, Github } from 'lucide-react';
 import { 
   DropdownMenu,
@@ -12,9 +12,31 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const Header = () => {
-  const [isGithubConnected] = useState(true);
+  const [isGithubConnected, setIsGithubConnected] = useState(true);
+  const { currentUser, logout } = useAuth();
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Signed out",
+      description: "You have been signed out successfully."
+    });
+    navigate('/');
+  };
+
+  const handleConnectGithub = () => {
+    setIsGithubConnected(true);
+    toast({
+      title: "GitHub Connected",
+      description: "Your GitHub account has been connected successfully."
+    });
+  };
   
   return (
     <header className="sticky top-0 z-10 w-full bg-background/80 backdrop-blur-sm border-b border-border px-4 py-3 flex items-center justify-between">
@@ -22,42 +44,67 @@ const Header = () => {
         <Button variant="ghost" size="icon" className="md:hidden">
           <Menu className="h-5 w-5" />
         </Button>
-        <div className="flex items-center gap-2">
+        <Link to="/dashboard" className="flex items-center gap-2">
           <div className="text-apple-blue font-bold text-xl">Contrib<span className="text-foreground">Spark</span></div>
-        </div>
+        </Link>
       </div>
       
       <div className="flex items-center gap-4">
-        {!isGithubConnected ? (
-          <Button variant="default" className="flex items-center gap-2">
+        {!currentUser?.isGithubConnected && !isGithubConnected ? (
+          <Button variant="default" className="flex items-center gap-2" onClick={handleConnectGithub}>
             <Github className="h-4 w-4" />
             Connect GitHub
           </Button>
         ) : (
           <>
-            <Button variant="ghost" size="icon" className="relative">
-              <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-apple-red rounded-full"></span>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="relative">
+                  <Bell className="h-5 w-5" />
+                  <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-apple-red rounded-full"></span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-80">
+                <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <div className="max-h-80 overflow-auto py-2">
+                  <div className="px-4 py-2 hover:bg-accent rounded-md cursor-pointer">
+                    <div className="font-medium">New issue recommendation</div>
+                    <div className="text-sm text-muted-foreground">A new issue matching your skills was found in react/react</div>
+                    <div className="text-xs text-muted-foreground mt-1">2 hours ago</div>
+                  </div>
+                  <div className="px-4 py-2 hover:bg-accent rounded-md cursor-pointer">
+                    <div className="font-medium">Contribution activity</div>
+                    <div className="text-sm text-muted-foreground">Your PR was merged in typescript/typescript</div>
+                    <div className="text-xs text-muted-foreground mt-1">1 day ago</div>
+                  </div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="cursor-pointer justify-center text-center">
+                  View all notifications
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="flex items-center gap-2 px-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
-                    <AvatarFallback>AD</AvatarFallback>
+                    <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username} />
+                    <AvatarFallback>{currentUser?.username?.substring(0, 2).toUpperCase() || 'US'}</AvatarFallback>
                   </Avatar>
-                  <span className="hidden md:inline">{mockUser.username}</span>
+                  <span className="hidden md:inline">{currentUser?.username || 'User'}</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Profile & Skills</DropdownMenuItem>
-                <DropdownMenuItem>My Contributions</DropdownMenuItem>
-                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/dashboard')}>Dashboard</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/settings')}>Settings</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/skills')}>Profile & Skills</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/contributions')}>My Contributions</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Sign out</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </>

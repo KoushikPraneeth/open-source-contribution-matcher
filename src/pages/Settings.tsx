@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
-import { mockUser } from "@/data/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { 
   Bell, 
@@ -20,15 +20,19 @@ import {
   Smartphone, 
   Sun, 
   User,
-  Download,
-  Trash
+  Download as DownloadIcon,
+  Trash,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
+import { useTheme } from "@/contexts/ThemeContext";
 
 const Settings = () => {
   const { toast } = useToast();
-  const [theme, setTheme] = useState<"light" | "dark" | "system">("system");
+  const { theme, setTheme } = useTheme();
+  const { currentUser } = useAuth();
+  const [reduceMotion, setReduceMotion] = useState(false);
+  const [highContrast, setHighContrast] = useState(false);
   
   const handleSaveProfile = () => {
     toast({
@@ -43,12 +47,20 @@ const Settings = () => {
       description: "Your notification preferences have been updated."
     });
   };
+
+  const handleThemeChange = (newTheme: "light" | "dark" | "system") => {
+    setTheme(newTheme);
+    toast({
+      title: `Theme set to ${newTheme}`,
+      description: `The application appearance has been updated.`
+    });
+  };
   
   return (
     <div className="flex min-h-screen bg-background">
       <SideNavigation />
       <div className="flex-1">
-        <Header title="Settings" />
+        <Header />
         <main className="container py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">Settings</h1>
@@ -96,8 +108,8 @@ const Settings = () => {
                     <CardContent className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-16 w-16">
-                          <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
-                          <AvatarFallback>{mockUser.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                          <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username} />
+                          <AvatarFallback>{currentUser?.username?.substring(0, 2).toUpperCase() || 'US'}</AvatarFallback>
                         </Avatar>
                         <div>
                           <Button variant="outline" size="sm">Change Avatar</Button>
@@ -106,7 +118,7 @@ const Settings = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="display-name">Display Name</Label>
-                        <Input id="display-name" defaultValue={mockUser.username} />
+                        <Input id="display-name" defaultValue={currentUser?.username} />
                       </div>
                       
                       <div className="space-y-2">
@@ -116,7 +128,7 @@ const Settings = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" defaultValue="user@example.com" />
+                        <Input id="email" defaultValue={currentUser?.email} />
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -147,7 +159,7 @@ const Settings = () => {
                         <div className="flex-1">
                           <h3 className="text-sm font-medium">Connected to GitHub</h3>
                           <p className="text-sm text-muted-foreground">
-                            Your account is connected to GitHub as <strong>{mockUser.username}</strong>
+                            Your account is connected to GitHub as <strong>{currentUser?.username}</strong>
                           </p>
                         </div>
                         <Button variant="outline" size="sm">Disconnect</Button>
@@ -260,7 +272,7 @@ const Settings = () => {
                           <Button 
                             variant={theme === "light" ? "default" : "outline"} 
                             className="flex flex-col items-center justify-center h-20 gap-1"
-                            onClick={() => setTheme("light")}
+                            onClick={() => handleThemeChange("light")}
                           >
                             <Sun className="h-6 w-6" />
                             <span>Light</span>
@@ -268,7 +280,7 @@ const Settings = () => {
                           <Button 
                             variant={theme === "dark" ? "default" : "outline"} 
                             className="flex flex-col items-center justify-center h-20 gap-1"
-                            onClick={() => setTheme("dark")}
+                            onClick={() => handleThemeChange("dark")}
                           >
                             <Moon className="h-6 w-6" />
                             <span>Dark</span>
@@ -276,7 +288,7 @@ const Settings = () => {
                           <Button 
                             variant={theme === "system" ? "default" : "outline"} 
                             className="flex flex-col items-center justify-center h-20 gap-1"
-                            onClick={() => setTheme("system")}
+                            onClick={() => handleThemeChange("system")}
                           >
                             <div className="flex">
                               <Sun className="h-5 w-5" />
@@ -292,11 +304,19 @@ const Settings = () => {
                       <div className="space-y-3">
                         <div className="flex items-center justify-between">
                           <Label htmlFor="reduce-motion">Reduce motion</Label>
-                          <Switch id="reduce-motion" />
+                          <Switch 
+                            id="reduce-motion" 
+                            checked={reduceMotion}
+                            onCheckedChange={setReduceMotion}
+                          />
                         </div>
                         <div className="flex items-center justify-between">
                           <Label htmlFor="high-contrast">High contrast</Label>
-                          <Switch id="high-contrast" />
+                          <Switch 
+                            id="high-contrast" 
+                            checked={highContrast}
+                            onCheckedChange={setHighContrast}
+                          />
                         </div>
                       </div>
                     </CardContent>
@@ -355,7 +375,7 @@ const Settings = () => {
                         <h3 className="text-sm font-medium mb-3">Data Management</h3>
                         <div className="space-y-2">
                           <Button variant="outline" className="w-full justify-start">
-                            <Download className="mr-2 h-4 w-4" />
+                            <DownloadIcon className="mr-2 h-4 w-4" />
                             Download your data
                           </Button>
                           <Button variant="outline" className="w-full justify-start text-destructive hover:text-destructive">
