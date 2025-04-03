@@ -19,7 +19,9 @@ import {
   Shield, 
   Smartphone, 
   Sun, 
-  User 
+  User,
+  Download,
+  Trash
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
