@@ -1,9 +1,8 @@
 
-import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Bell, Menu, Github } from 'lucide-react';
+import { Bell, Menu, Github, Loader2 } from 'lucide-react';
 import { 
   DropdownMenu,
   DropdownMenuContent,
@@ -14,15 +13,16 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
 
 const Header = () => {
-  const [isGithubConnected, setIsGithubConnected] = useState(true);
-  const { currentUser, logout } = useAuth();
+  const [isConnectingGithub, setIsConnectingGithub] = useState(false);
+  const { currentUser, logout, loginWithGithub } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     toast({
       title: "Signed out",
       description: "You have been signed out successfully."
@@ -30,12 +30,15 @@ const Header = () => {
     navigate('/');
   };
 
-  const handleConnectGithub = () => {
-    setIsGithubConnected(true);
-    toast({
-      title: "GitHub Connected",
-      description: "Your GitHub account has been connected successfully."
-    });
+  const handleConnectGithub = async () => {
+    setIsConnectingGithub(true);
+    try {
+      await loginWithGithub();
+      // The page will redirect to GitHub OAuth flow
+    } catch (error) {
+      // Error handled in loginWithGithub
+      setIsConnectingGithub(false);
+    }
   };
   
   return (
@@ -50,9 +53,18 @@ const Header = () => {
       </div>
       
       <div className="flex items-center gap-4">
-        {!currentUser?.isGithubConnected && !isGithubConnected ? (
-          <Button variant="default" className="flex items-center gap-2" onClick={handleConnectGithub}>
-            <Github className="h-4 w-4" />
+        {currentUser && !currentUser.isGithubConnected ? (
+          <Button 
+            variant="default" 
+            className="flex items-center gap-2" 
+            onClick={handleConnectGithub}
+            disabled={isConnectingGithub}
+          >
+            {isConnectingGithub ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Github className="h-4 w-4" />
+            )}
             Connect GitHub
           </Button>
         ) : (

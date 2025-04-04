@@ -1,6 +1,7 @@
 
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import PageLoading from './PageLoading';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -14,8 +15,7 @@ const ProtectedRoute = ({
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    // You could add a loading spinner here
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    return <PageLoading />;
   }
 
   if (!isAuthenticated) {

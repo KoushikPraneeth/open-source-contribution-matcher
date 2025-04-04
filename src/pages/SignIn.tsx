@@ -12,7 +12,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
-import { Github } from 'lucide-react';
+import { Github, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
@@ -21,6 +21,7 @@ const SignIn = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGithubLoading, setIsGithubLoading] = useState(false);
   const { login, loginWithGithub, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -43,10 +44,10 @@ const SignIn = () => {
         description: "Welcome back to ContribSpark!"
       });
       navigate('/dashboard');
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: "Failed to sign in",
-        description: "Please check your credentials and try again.",
+        description: error.message || "Please check your credentials and try again.",
         variant: "destructive"
       });
     } finally {
@@ -55,22 +56,13 @@ const SignIn = () => {
   };
 
   const handleGithubLogin = async () => {
-    setIsSubmitting(true);
+    setIsGithubLoading(true);
     try {
       await loginWithGithub();
-      toast({
-        title: "Successfully signed in with GitHub",
-        description: "Welcome to ContribSpark!"
-      });
-      navigate('/dashboard');
+      // Note: No need for navigation or success toast here as the page will redirect to GitHub
     } catch (error) {
-      toast({
-        title: "Failed to sign in with GitHub",
-        description: "An error occurred during GitHub authentication.",
-        variant: "destructive"
-      });
-    } finally {
-      setIsSubmitting(false);
+      // Error is already handled in the loginWithGithub function
+      setIsGithubLoading(false);
     }
   };
 
@@ -95,10 +87,14 @@ const SignIn = () => {
               variant="outline"
               className="w-full"
               type="button"
-              disabled={isSubmitting}
+              disabled={isGithubLoading}
               onClick={handleGithubLogin}
             >
-              <Github className="mr-2 h-4 w-4" />
+              {isGithubLoading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Github className="mr-2 h-4 w-4" />
+              )}
               Sign in with GitHub
             </Button>
             
@@ -150,7 +146,14 @@ const SignIn = () => {
                 className="w-full"
                 disabled={isSubmitting}
               >
-                {isSubmitting ? "Signing in..." : "Sign in"}
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign in"
+                )}
               </Button>
             </form>
           </CardContent>
