@@ -85,7 +85,25 @@ class GitHubService {
         sort: 'updated',
         per_page: 100
       });
-      return data;
+      
+      // Map API response to our interface
+      return data.map(repo => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        html_url: repo.html_url,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        topics: repo.topics || [],
+        open_issues_count: repo.open_issues_count,
+        owner: {
+          login: repo.owner.login,
+          avatar_url: repo.owner.avatar_url
+        }
+      }));
     } catch (error) {
       console.error("Failed to fetch user repositories:", error);
       return [];
@@ -106,7 +124,25 @@ class GitHubService {
         order: 'desc',
         per_page: 50
       });
-      return data.items;
+      
+      // Map API response to our interface
+      return data.items.map(repo => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        description: repo.description,
+        html_url: repo.html_url,
+        stargazers_count: repo.stargazers_count,
+        forks_count: repo.forks_count,
+        language: repo.language,
+        updated_at: repo.updated_at,
+        topics: repo.topics || [],
+        open_issues_count: repo.open_issues_count,
+        owner: {
+          login: repo.owner.login,
+          avatar_url: repo.owner.avatar_url
+        }
+      }));
     } catch (error) {
       console.error("Failed to search repositories:", error);
       return [];
@@ -126,7 +162,23 @@ class GitHubService {
         order: 'desc',
         per_page: 50
       });
-      return data.items;
+      
+      // Map API response to our interface
+      return data.items.map(issue => ({
+        id: issue.id,
+        number: issue.number,
+        title: issue.title,
+        html_url: issue.html_url,
+        state: issue.state,
+        created_at: issue.created_at,
+        updated_at: issue.updated_at,
+        labels: issue.labels.map((label: any) => ({
+          name: label.name || '',
+          color: label.color || ''
+        })),
+        body: issue.body,
+        repository_url: issue.repository_url
+      }));
     } catch (error) {
       console.error("Failed to fetch beginner-friendly issues:", error);
       return [];
