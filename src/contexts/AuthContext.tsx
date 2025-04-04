@@ -1,10 +1,9 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Session } from '@supabase/supabase-js';
+import { Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
 
-export interface User {
+export interface AuthUser {
   id: string;
   email: string;
   username: string;
@@ -13,7 +12,7 @@ export interface User {
 }
 
 interface AuthContextType {
-  currentUser: User | null;
+  currentUser: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
@@ -37,8 +36,7 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider = ({ children }: AuthProviderProps) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [supabaseUser, setSupabaseUser] = useState<User | null>(null);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -77,7 +75,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       (identity: any) => identity.provider === 'github'
     );
 
-    const mappedUser: User = {
+    const mappedUser: AuthUser = {
       id: user.id,
       email: user.email || '',
       username: user.user_metadata?.user_name || user.user_metadata?.username || user.email?.split('@')[0] || 'user',

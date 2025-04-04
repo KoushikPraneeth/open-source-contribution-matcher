@@ -56,6 +56,12 @@ const Settings = () => {
     });
   };
   
+  // Get user initials for avatar fallback
+  const getUserInitials = () => {
+    if (!currentUser?.username) return 'US';
+    return currentUser.username.substring(0, 2).toUpperCase();
+  };
+  
   return (
     <div className="flex min-h-screen bg-background">
       <SideNavigation />
@@ -108,8 +114,8 @@ const Settings = () => {
                     <CardContent className="space-y-4">
                       <div className="flex items-center space-x-4">
                         <Avatar className="h-16 w-16">
-                          <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username} />
-                          <AvatarFallback>{currentUser?.username?.substring(0, 2).toUpperCase() || 'US'}</AvatarFallback>
+                          <AvatarImage src={currentUser?.avatarUrl} alt={currentUser?.username || 'User'} />
+                          <AvatarFallback>{getUserInitials()}</AvatarFallback>
                         </Avatar>
                         <div>
                           <Button variant="outline" size="sm">Change Avatar</Button>
@@ -118,7 +124,7 @@ const Settings = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="display-name">Display Name</Label>
-                        <Input id="display-name" defaultValue={currentUser?.username} />
+                        <Input id="display-name" defaultValue={currentUser?.username || ''} />
                       </div>
                       
                       <div className="space-y-2">
@@ -128,7 +134,7 @@ const Settings = () => {
                       
                       <div className="space-y-2">
                         <Label htmlFor="email">Email</Label>
-                        <Input id="email" defaultValue={currentUser?.email} />
+                        <Input id="email" defaultValue={currentUser?.email || ''} />
                       </div>
                       
                       <div className="flex items-center justify-between">
@@ -159,7 +165,7 @@ const Settings = () => {
                         <div className="flex-1">
                           <h3 className="text-sm font-medium">Connected to GitHub</h3>
                           <p className="text-sm text-muted-foreground">
-                            Your account is connected to GitHub as <strong>{currentUser?.username}</strong>
+                            Your account is connected to GitHub as <strong>{currentUser?.username || 'User'}</strong>
                           </p>
                         </div>
                         <Button variant="outline" size="sm">Disconnect</Button>

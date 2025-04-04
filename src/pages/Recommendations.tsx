@@ -27,9 +27,12 @@ const Recommendations = () => {
     complexity: IssueComplexity[];
     skills: string[];
     labels: string[];
-    search?: string;
+    search: string;
   }) => {
-    setFilters(newFilters);
+    setFilters({
+      ...newFilters,
+      search: newFilters.search || '',
+    });
   };
   
   const handleTrackIssue = (issue: Issue) => {
