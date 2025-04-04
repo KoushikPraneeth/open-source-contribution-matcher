@@ -9,6 +9,7 @@ export interface AuthUser {
   username: string;
   avatarUrl?: string;
   isGithubConnected: boolean;
+  githubUsername?: string;
 }
 
 interface AuthContextType {
@@ -81,6 +82,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       username: user.user_metadata?.user_name || user.user_metadata?.username || user.email?.split('@')[0] || 'user',
       avatarUrl: user.user_metadata?.avatar_url || undefined,
       isGithubConnected: !!githubIdentity,
+      githubUsername: user.user_metadata?.user_name || user.user_metadata?.preferred_username,
     };
 
     setCurrentUser(mappedUser);
@@ -127,6 +129,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
         provider: 'github',
         options: {
           redirectTo: window.location.origin,
+          scopes: 'repo,read:user,user:email', // Request needed scopes for repo access and user info
         },
       });
       
