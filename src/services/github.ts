@@ -1,6 +1,7 @@
-
 import { Octokit } from "@octokit/rest";
 import { supabase } from "@/integrations/supabase/client";
+import { Skill } from "@/types";
+import { getMatchedRepositories } from "@/utils/repoMatching";
 
 export interface GitHubRepository {
   id: number;
@@ -14,6 +15,7 @@ export interface GitHubRepository {
   updated_at: string;
   topics: string[];
   open_issues_count: number;
+  matchScore?: number;
   owner: {
     login: string;
     avatar_url: string;
@@ -205,6 +207,101 @@ class GitHubService {
     } catch (error) {
       console.error("Failed to fetch user contributions:", error);
       return null;
+    }
+  }
+  
+  /**
+   * Get matched repositories based on user skills and experience level
+   */
+  async getMatchedRepositories(
+    userSkills: Skill[],
+    experienceLevel: string,
+    minMatchScore: number = 50,
+    maxResults: number = 50
+  ): Promise<GitHubRepository[]> {
+    if (!await this.ensureInitialized()) return [];
+    
+    try {
+      // First, fetch trending repositories in languages that match user skills
+      const languageSkills = userSkills
+        .filter(skill => skill.category === 'Language')
+        .map(skill => skill.name);
+      
+      let allRepos: GitHubRepository[] = [];
+      
+      // If user has language skills, search for each language
+      if (languageSkills.length > 0) {
+        // Limit to 3 languages to avoid rate limiting
+        const topLanguages = languageSkills.slice(0, 3);
+        
+        for (const language of topLanguages) {
+          const languageRepos = await this.searchRepositories(`language:${language}`, language, 10);
+          allRepos = [...allRepos, ...languageRepos];
+        }
+      } else {
+        // If no language skills, fetch trending repositories
+        const trendingRepos = await this.searchRepositories('stars:>100', undefined, 100);
+        allRepos = [...allRepos, ...trendingRepos];
+      }
+      
+      // Add repositories with good first issues
+      const beginnerIssues = await this.getBeginnerFriendlyIssues();
+      
+      // Extract unique repository URLs from issues
+      const repoUrls = [...new Set(beginnerIssues.map(issue => {
+        // Extract repo name from repository_url
+        // Format: https://api.github.com/repos/owner/repo
+        const parts = issue.repository_url.split('/');
+        return `${parts[parts.length - 2]}/${parts[parts.length - 1]}`;
+      }))];
+      
+      // Fetch repositories with good first issues
+      for (const repoFullName of repoUrls.slice(0, 10)) {
+        try {
+          const [owner, repo] = repoFullName.split('/');
+          const { data } = await this.octokit!.repos.get({ owner, repo });
+          
+          // Map to our interface
+          allRepos.push({
+            id: data.id,
+            name: data.name,
+            full_name: data.full_name,
+            description: data.description,
+            html_url: data.html_url,
+            stargazers_count: data.stargazers_count,
+            forks_count: data.forks_count,
+            language: data.language,
+            updated_at: data.updated_at,
+            topics: data.topics || [],
+            open_issues_count: data.open_issues_count,
+            owner: {
+              login: data.owner.login,
+              avatar_url: data.owner.avatar_url
+            }
+          });
+        } catch (error) {
+          console.error(`Failed to fetch repository details for ${repoFullName}:`, error);
+        }
+      }
+      
+      // Remove duplicates
+      const uniqueRepos = Array.from(
+        new Map(allRepos.map(repo => [repo.id, repo])).values()
+      );
+      
+      // Match repositories to user skills and preferences
+      const matchedRepos = getMatchedRepositories(
+        uniqueRepos, 
+        userSkills, 
+        experienceLevel, 
+        minMatchScore
+      );
+      
+      // Return top results
+      return matchedRepos.slice(0, maxResults);
+    } catch (error) {
+      console.error("Failed to fetch matched repositories:", error);
+      return [];
     }
   }
 }

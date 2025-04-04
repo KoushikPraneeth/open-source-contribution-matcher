@@ -1,7 +1,7 @@
-
 import { useState, useEffect } from 'react';
 import { githubService, GitHubRepository, GitHubIssue } from '@/services/github';
 import { useAuth } from '@/contexts/AuthContext';
+import { Skill } from '@/types';
 
 export function useGitHub() {
   const { currentUser } = useAuth();
@@ -84,6 +84,28 @@ export function useGitHub() {
     }
   };
 
+  const getMatchedRepositories = async (
+    userSkills: Skill[], 
+    experienceLevel: string,
+    minMatchScore: number = 50
+  ) => {
+    setIsLoading(true);
+    try {
+      const repos = await githubService.getMatchedRepositories(
+        userSkills, 
+        experienceLevel, 
+        minMatchScore
+      );
+      return repos;
+    } catch (err) {
+      console.error("Repository matching error:", err);
+      setError("Failed to find matching repositories.");
+      return [];
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return {
     isInitialized,
     isLoading,
@@ -93,6 +115,7 @@ export function useGitHub() {
     searchRepositories,
     getBeginnerFriendlyIssues,
     getUserContributions,
+    getMatchedRepositories,
     refresh: initializeGitHub
   };
 }

@@ -4,12 +4,14 @@ import Header from '@/components/Header';
 import SideNavigation from '@/components/SideNavigation';
 import IssueCard from '@/components/IssueCard';
 import IssueFilters from '@/components/IssueFilters';
+import MatchedRepositories from '@/components/MatchedRepositories';
 import { mockIssues, mockContributions, defaultFilters } from '@/data/mockData';
 import { Issue, IssueComplexity, ContributionStatus } from '@/types';
 import { toast } from '@/components/ui/use-toast';
 import { Button } from '@/components/ui/button';
 import { RefreshCw, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Recommendations = () => {
   const [filters, setFilters] = useState({
@@ -107,12 +109,12 @@ const Recommendations = () => {
                   <ArrowLeft className="h-5 w-5" />
                 </Button>
               </Link>
-              <h1 className="text-2xl font-bold">Recommended Issues</h1>
+              <h1 className="text-2xl font-bold">Recommendations</h1>
             </div>
             
             <div className="flex justify-between items-center">
               <p className="text-muted-foreground">
-                Personalized issue recommendations based on your skills and interests
+                Personalized recommendations based on your skills and interests
               </p>
               
               <Button 
@@ -126,27 +128,40 @@ const Recommendations = () => {
               </Button>
             </div>
             
-            <IssueFilters onFilterChange={handleFilterChange} />
-            
-            <div className="grid gap-4">
-              {filteredIssues.length > 0 ? (
-                filteredIssues.map(issue => (
-                  <IssueCard
-                    key={issue.id}
-                    issue={issue}
-                    isTracking={trackedIssues.includes(issue.id)}
-                    onTrack={handleTrackIssue}
-                  />
-                ))
-              ) : (
-                <div className="text-center py-12 bg-muted rounded-lg">
-                  <h3 className="font-medium text-lg">No matching issues found</h3>
-                  <p className="text-muted-foreground mt-2">
-                    Try adjusting your filters or checking back later
-                  </p>
+            <Tabs defaultValue="issues" className="w-full">
+              <TabsList className="mb-4">
+                <TabsTrigger value="issues">Issues</TabsTrigger>
+                <TabsTrigger value="repositories">Repositories</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="issues" className="space-y-6">
+                <IssueFilters onFilterChange={handleFilterChange} />
+                
+                <div className="grid gap-4">
+                  {filteredIssues.length > 0 ? (
+                    filteredIssues.map(issue => (
+                      <IssueCard
+                        key={issue.id}
+                        issue={issue}
+                        isTracking={trackedIssues.includes(issue.id)}
+                        onTrack={handleTrackIssue}
+                      />
+                    ))
+                  ) : (
+                    <div className="text-center py-12 bg-muted rounded-lg">
+                      <h3 className="font-medium text-lg">No matching issues found</h3>
+                      <p className="text-muted-foreground mt-2">
+                        Try adjusting your filters or checking back later
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </TabsContent>
+              
+              <TabsContent value="repositories">
+                <MatchedRepositories />
+              </TabsContent>
+            </Tabs>
           </div>
         </main>
       </div>
