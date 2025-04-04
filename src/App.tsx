@@ -16,6 +16,7 @@ import SavedIssues from "./pages/SavedIssues";
 import SkillsGrowth from "./pages/SkillsGrowth";
 import Community from "./pages/Community";
 import Settings from "./pages/Settings";
+import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -78,6 +79,11 @@ const App = () => (
                   <Route path="/settings" element={
                     <ProtectedRoute>
                       <Settings />
+                    </ProtectedRoute>
+                  } />
+                  <Route path="/profile" element={
+                    <ProtectedRoute>
+                      <UserProfile />
                     </ProtectedRoute>
                   } />
                   {/* Redirect /index to /dashboard */}

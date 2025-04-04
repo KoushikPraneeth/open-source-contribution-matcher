@@ -25,6 +25,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { GitHubRepository } from '@/services/github';
 import { format } from 'date-fns';
 import { Skill } from '@/types';
+import RepositoryFeedbackButtons from './RepositoryFeedbackButtons';
 
 export default function MatchedRepositories() {
   const { currentUser } = useAuth();
@@ -32,6 +33,7 @@ export default function MatchedRepositories() {
   const { toast } = useToast();
   const [matchedRepos, setMatchedRepos] = useState<GitHubRepository[]>([]);
   const [minMatchScore, setMinMatchScore] = useState<number>(60);
+  const [hiddenRepoIds, setHiddenRepoIds] = useState<number[]>([]);
   
   useEffect(() => {
     if (currentUser) {
@@ -56,9 +58,11 @@ export default function MatchedRepositories() {
         minMatchScore
       );
       
-      setMatchedRepos(repos);
+      // Filter out hidden repositories
+      const filteredRepos = repos.filter(repo => !hiddenRepoIds.includes(repo.id));
+      setMatchedRepos(filteredRepos);
       
-      if (repos.length === 0) {
+      if (filteredRepos.length === 0) {
         toast({
           title: "No matches found",
           description: "Try adjusting the match quality or updating your skills."
@@ -76,6 +80,42 @@ export default function MatchedRepositories() {
   
   const handleMinScoreChange = (value: string) => {
     setMinMatchScore(parseInt(value));
+  };
+  
+  const handleFeedback = (repoId: number, feedbackType: 'like' | 'dislike' | 'save' | 'hide') => {
+    // In a real app, this would be sent to a backend to store user preferences
+    console.log(`Feedback for repo ${repoId}: ${feedbackType}`);
+    
+    // If the user hides a repository, remove it from the current list
+    if (feedbackType === 'hide') {
+      setHiddenRepoIds(prev => [...prev, repoId]);
+      setMatchedRepos(prev => prev.filter(repo => repo.id !== repoId));
+    }
+    
+    // In a real app, this feedback would be used to improve future recommendations
+    // For now, we'll just adjust the match scores locally as a demo
+    if (feedbackType === 'like') {
+      // Simulate improving matches for repositories with similar topics
+      const likedRepo = matchedRepos.find(repo => repo.id === repoId);
+      if (likedRepo) {
+        setMatchedRepos(prev => 
+          prev.map(repo => {
+            // Find repos with similar topics and boost their score slightly
+            const hasCommonTopics = repo.topics.some(topic => 
+              likedRepo.topics.includes(topic)
+            );
+            
+            if (hasCommonTopics && repo.id !== repoId) {
+              return {
+                ...repo,
+                matchScore: Math.min(100, (repo.matchScore || 0) + 5)
+              };
+            }
+            return repo;
+          })
+        );
+      }
+    }
   };
   
   return (
@@ -198,16 +238,23 @@ export default function MatchedRepositories() {
                       )}
                     </div>
                   )}
+                  
+                  <div className="flex justify-between items-center mt-3">
+                    <RepositoryFeedbackButtons 
+                      repositoryId={repo.id}
+                      onFeedback={handleFeedback}
+                    />
+                    
+                    <Button 
+                      size="icon" 
+                      variant="ghost" 
+                      className="ml-2 flex-shrink-0"
+                      onClick={() => window.open(repo.html_url, '_blank')}
+                    >
+                      <Github className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
-                
-                <Button 
-                  size="icon" 
-                  variant="ghost" 
-                  className="ml-2 flex-shrink-0"
-                  onClick={() => window.open(repo.html_url, '_blank')}
-                >
-                  <Github className="h-4 w-4" />
-                </Button>
               </div>
             ))}
             
