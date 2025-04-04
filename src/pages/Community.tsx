@@ -1,6 +1,8 @@
+
 import { useState } from "react";
 import SideNavigation from "@/components/SideNavigation";
 import Header from "@/components/Header";
+import ContributionLeaderboard from "@/components/ContributionLeaderboard";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -10,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { mockUser } from "@/data/mockData";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, MessageSquare, ThumbsUp, Users } from "lucide-react";
+import { CalendarIcon, MessageSquare, ThumbsUp, Users, Share2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 
@@ -59,6 +61,17 @@ const Community = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                      <div className="flex items-center space-x-4 pb-4 border-b">
+                        <Avatar>
+                          <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
+                          <AvatarFallback>{mockUser.username.substring(0, 2).toUpperCase()}</AvatarFallback>
+                        </Avatar>
+                        <div className="flex-1">
+                          <Input placeholder="Share something with the community..." />
+                        </div>
+                        <Button>Post</Button>
+                      </div>
+
                       <div className="space-y-4">
                         <div className="flex items-start space-x-4">
                           <Avatar>
@@ -68,12 +81,19 @@ const Community = () => {
                           <div className="space-y-1">
                             <p className="text-sm font-medium leading-none">{mockUser.username}</p>
                             <p className="text-sm text-muted-foreground">
-                              Shared a new contribution opportunity: <a href="#" className="text-apple-blue hover:underline">Help improve documentation for React</a>
+                              Shared a new contribution opportunity: <a href="#" className="text-primary hover:underline">Help improve documentation for React</a>
                             </p>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                               <time dateTime="2023-10-23T16:30:00Z">October 23, 2023</time>
                               <span>•</span>
-                              <Button variant="link" size="sm">Reply</Button>
+                              <Button variant="link" size="sm" className="h-auto p-0">Reply</Button>
+                              <span>•</span>
+                              <Button variant="link" size="sm" className="h-auto p-0">Like</Button>
+                              <span>•</span>
+                              <Button variant="link" size="sm" className="h-auto p-0">
+                                <Share2 className="h-3 w-3 mr-1" />
+                                Share
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -86,12 +106,19 @@ const Community = () => {
                           <div className="space-y-1">
                             <p className="text-sm font-medium leading-none">{mockUser.username}</p>
                             <p className="text-sm text-muted-foreground">
-                              Just merged a pull request! <a href="#" className="text-apple-blue hover:underline">Fixed a bug in the authentication module</a>
+                              Just merged a pull request! <a href="#" className="text-primary hover:underline">Fixed a bug in the authentication module</a>
                             </p>
                             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
                               <time dateTime="2023-10-22T09:15:00Z">October 22, 2023</time>
                               <span>•</span>
-                              <Button variant="link" size="sm">Reply</Button>
+                              <Button variant="link" size="sm" className="h-auto p-0">Reply</Button>
+                              <span>•</span>
+                              <Button variant="link" size="sm" className="h-auto p-0">Like</Button>
+                              <span>•</span>
+                              <Button variant="link" size="sm" className="h-auto p-0">
+                                <Share2 className="h-3 w-3 mr-1" />
+                                Share
+                              </Button>
                             </div>
                           </div>
                         </div>
@@ -170,59 +197,7 @@ const Community = () => {
                 </TabsContent>
 
                 <TabsContent value="leaderboard" className="m-0">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Community Leaderboard</CardTitle>
-                      <CardDescription>
-                        Top contributors in the community.
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="grid gap-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
-                              <AvatarFallback>{mockUser.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium leading-none">{mockUser.username}</p>
-                              <p className="text-sm text-muted-foreground">Top Contributor</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">1st</Badge>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
-                              <AvatarFallback>{mockUser.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium leading-none">{mockUser.username}</p>
-                              <p className="text-sm text-muted-foreground">Active Contributor</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">2nd</Badge>
-                        </div>
-
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <Avatar>
-                              <AvatarImage src={mockUser.avatarUrl} alt={mockUser.username} />
-                              <AvatarFallback>{mockUser.username.substring(0, 2).toUpperCase()}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <p className="text-sm font-medium leading-none">{mockUser.username}</p>
-                              <p className="text-sm text-muted-foreground">Regular Contributor</p>
-                            </div>
-                          </div>
-                          <Badge variant="secondary">3rd</Badge>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
+                  <ContributionLeaderboard />
                 </TabsContent>
               </div>
             </div>

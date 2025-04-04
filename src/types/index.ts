@@ -7,6 +7,9 @@ export interface User {
   skills: Skill[];
   experienceLevel: ExperienceLevel;
   areasOfInterest: string[];
+  projectTypes?: string[];
+  contributionGoals?: string[];
+  savedRepositories?: { id: number; date: string }[];
 }
 
 export interface Skill {

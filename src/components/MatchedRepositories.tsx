@@ -242,6 +242,7 @@ export default function MatchedRepositories() {
                   <div className="flex justify-between items-center mt-3">
                     <RepositoryFeedbackButtons 
                       repositoryId={repo.id}
+                      repository={repo}
                       onFeedback={handleFeedback}
                     />
                     

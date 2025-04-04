@@ -5,6 +5,7 @@ import SideNavigation from '@/components/SideNavigation';
 import IssueCard from '@/components/IssueCard';
 import IssueFilters from '@/components/IssueFilters';
 import MatchedRepositories from '@/components/MatchedRepositories';
+import IssueExplorer from '@/components/IssueExplorer';
 import { mockIssues, mockContributions, defaultFilters } from '@/data/mockData';
 import { Issue, IssueComplexity, ContributionStatus } from '@/types';
 import { toast } from '@/components/ui/use-toast';
@@ -128,11 +129,16 @@ const Recommendations = () => {
               </Button>
             </div>
             
-            <Tabs defaultValue="issues" className="w-full">
+            <Tabs defaultValue="repositories" className="w-full">
               <TabsList className="mb-4">
-                <TabsTrigger value="issues">Issues</TabsTrigger>
                 <TabsTrigger value="repositories">Repositories</TabsTrigger>
+                <TabsTrigger value="issues">Issue Recommendations</TabsTrigger>
+                <TabsTrigger value="explorer">Issue Explorer</TabsTrigger>
               </TabsList>
+              
+              <TabsContent value="repositories">
+                <MatchedRepositories />
+              </TabsContent>
               
               <TabsContent value="issues" className="space-y-6">
                 <IssueFilters onFilterChange={handleFilterChange} />
@@ -158,8 +164,8 @@ const Recommendations = () => {
                 </div>
               </TabsContent>
               
-              <TabsContent value="repositories">
-                <MatchedRepositories />
+              <TabsContent value="explorer">
+                <IssueExplorer />
               </TabsContent>
             </Tabs>
           </div>
