@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useContributions } from "@/hooks/useContributions";
 import SideNavigation from "@/components/SideNavigation";
@@ -48,7 +47,7 @@ const SavedIssues = () => {
     <div className="flex min-h-screen bg-background">
       <SideNavigation />
       <div className="flex-1">
-        <Header title="Saved Issues" />
+        <Header>Saved Issues</Header>
         <main className="container py-6">
           <div className="mb-6 flex items-center justify-between">
             <h1 className="text-2xl font-semibold">Saved Issues</h1>

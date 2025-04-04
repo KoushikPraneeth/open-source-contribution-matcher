@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import SideNavigation from "@/components/SideNavigation";
 import Header from "@/components/Header";
@@ -57,7 +56,7 @@ const SkillsGrowth = () => {
     <div className="flex min-h-screen bg-background">
       <SideNavigation />
       <div className="flex-1">
-        <Header title="Skills Growth" />
+        <Header>Skills Growth</Header>
         <main className="container py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">Skills Growth</h1>
@@ -148,7 +147,7 @@ const SkillsGrowth = () => {
                           <XAxis type="number" />
                           <YAxis dataKey="name" type="category" />
                           <Tooltip />
-                          <Bar dataKey="value" nameKey="name">
+                          <Bar dataKey="value">
                             {contributionsBySkill.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
@@ -165,7 +164,6 @@ const SkillsGrowth = () => {
                             cy="50%"
                             outerRadius={100}
                             dataKey="value"
-                            nameKey="name"
                             label={(entry) => `${entry.name}: ${entry.value}`}
                           >
                             {skillsByLevel.map((entry, index) => (

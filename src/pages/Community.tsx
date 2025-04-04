@@ -21,7 +21,7 @@ const Community = () => {
     <div className="flex min-h-screen bg-background">
       <SideNavigation />
       <div className="flex-1">
-        <Header title="Community" />
+        <Header>Community</Header>
         <main className="container py-6">
           <div className="mb-6">
             <h1 className="text-2xl font-semibold">Community</h1>
