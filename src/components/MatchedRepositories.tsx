@@ -24,6 +24,7 @@ import { useGitHub } from '@/hooks/useGitHub';
 import { useAuth } from '@/contexts/AuthContext';
 import { GitHubRepository } from '@/services/github';
 import { format } from 'date-fns';
+import { Skill } from '@/types';
 
 export default function MatchedRepositories() {
   const { currentUser } = useAuth();

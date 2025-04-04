@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
+import { Skill, ExperienceLevel } from '@/types';
 
 export interface AuthUser {
   id: string;
@@ -10,6 +11,8 @@ export interface AuthUser {
   avatarUrl?: string;
   isGithubConnected: boolean;
   githubUsername?: string;
+  skills?: Skill[];
+  experienceLevel?: ExperienceLevel;
 }
 
 interface AuthContextType {
@@ -83,6 +86,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       avatarUrl: user.user_metadata?.avatar_url || undefined,
       isGithubConnected: !!githubIdentity,
       githubUsername: user.user_metadata?.user_name || user.user_metadata?.preferred_username,
+      // We'll use mock data initially - in a real app, this would come from a database
+      skills: user.user_metadata?.skills || [], 
+      experienceLevel: user.user_metadata?.experienceLevel || ExperienceLevel.Beginner,
     };
 
     setCurrentUser(mappedUser);
