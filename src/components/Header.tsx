@@ -13,9 +13,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
+import { useState, ReactNode } from 'react';
 
-const Header = () => {
+interface HeaderProps {
+  children?: ReactNode;
+}
+
+const Header = ({ children }: HeaderProps) => {
   const [isConnectingGithub, setIsConnectingGithub] = useState(false);
   const { currentUser, logout, loginWithGithub } = useAuth();
   const navigate = useNavigate();
