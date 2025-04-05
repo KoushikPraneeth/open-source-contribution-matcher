@@ -1,2 +1,4 @@
 
-/* This will be replaced with the uploaded image */
+// This is a placeholder for the actual image
+// We'll replace it with a base64-encoded image to fix the 404 error
+// In a real project, you would add an actual PNG file

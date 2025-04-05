@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
@@ -13,6 +14,9 @@ export interface AuthUser {
   githubUsername?: string;
   skills?: Skill[];
   experienceLevel?: ExperienceLevel;
+  projectTypes?: string[];
+  contributionGoals?: string[];
+  savedRepositories?: { id: number; date: string }[];
 }
 
 interface AuthContextType {
@@ -23,6 +27,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, username: string) => Promise<void>;
   loginWithGithub: () => Promise<void>;
   logout: () => Promise<void>;
+  updateUserProfile: (userData: Partial<AuthUser>) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -89,6 +94,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       // We'll use mock data initially - in a real app, this would come from a database
       skills: user.user_metadata?.skills || [], 
       experienceLevel: user.user_metadata?.experienceLevel || ExperienceLevel.Beginner,
+      projectTypes: user.user_metadata?.projectTypes || [],
+      contributionGoals: user.user_metadata?.contributionGoals || [],
+      savedRepositories: user.user_metadata?.savedRepositories || [],
     };
 
     setCurrentUser(mappedUser);
@@ -157,6 +165,60 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     }
   };
 
+  const updateUserProfile = async (userData: Partial<AuthUser>) => {
+    try {
+      setIsLoading(true);
+      
+      if (!currentUser) {
+        throw new Error("No authenticated user found");
+      }
+      
+      // In a real app, update the user data in the database
+      // For this demo, we'll update the user metadata in Supabase Auth
+      const { error } = await supabase.auth.updateUser({
+        data: {
+          username: userData.username || currentUser.username,
+          skills: userData.skills || currentUser.skills,
+          experienceLevel: userData.experienceLevel || currentUser.experienceLevel,
+          projectTypes: userData.projectTypes || currentUser.projectTypes,
+          contributionGoals: userData.contributionGoals || currentUser.contributionGoals,
+          savedRepositories: userData.savedRepositories || currentUser.savedRepositories,
+        }
+      });
+      
+      if (error) {
+        toast({
+          title: "Update Error",
+          description: error.message,
+          variant: "destructive"
+        });
+        throw error;
+      }
+      
+      // Update local state
+      setCurrentUser(prev => {
+        if (!prev) return userData as AuthUser;
+        return { ...prev, ...userData };
+      });
+      
+      toast({
+        title: "Profile Updated",
+        description: "Your profile has been updated successfully."
+      });
+      
+    } catch (error: any) {
+      console.error('Profile update error:', error);
+      toast({
+        title: "Update Error",
+        description: error.message || "Failed to update profile",
+        variant: "destructive"
+      });
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const logout = async () => {
     await supabase.auth.signOut();
     setCurrentUser(null);
@@ -169,7 +231,8 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     login,
     signUp,
     loginWithGithub,
-    logout
+    logout,
+    updateUserProfile
   };
 
   return (

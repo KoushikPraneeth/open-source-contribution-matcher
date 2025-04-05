@@ -1,5 +1,6 @@
 
-import { Suspense, lazy, ErrorBoundary } from "react";
+import { Suspense, lazy } from "react";
+import { ErrorBoundary } from "react-error-boundary"; // Using react-error-boundary instead of importing from React
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";

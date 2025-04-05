@@ -95,3 +95,13 @@ export interface Contribution {
   notes?: string;
   prUrl?: string;
 }
+
+// User feedback types
+export type RepositoryFeedbackType = 'like' | 'dislike' | 'save' | 'hide';
+
+export interface RepositoryFeedback {
+  userId: string;
+  repositoryId: number;
+  feedbackType: RepositoryFeedbackType;
+  date: string;
+}

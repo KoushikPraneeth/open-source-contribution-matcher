@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -144,7 +143,6 @@ export default function UserPreferences() {
     
     try {
       await updateUserProfile({
-        ...currentUser,
         skills,
         experienceLevel,
         projectTypes: selectedProjectTypes,
