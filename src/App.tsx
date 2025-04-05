@@ -19,6 +19,8 @@ import Community from "./pages/Community";
 import Settings from "./pages/Settings";
 import UserProfile from "./pages/UserProfile";
 import NotFound from "./pages/NotFound";
+import Onboarding from "./pages/Onboarding";
+import AdminDashboard from "./pages/AdminDashboard";
 import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
@@ -64,6 +66,7 @@ const queryClient = new QueryClient({
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
     },
   },
 });
@@ -83,6 +86,11 @@ const App = () => (
                     <Route path="/" element={<Landing />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
+                    <Route path="/onboarding" element={
+                      <ProtectedRoute>
+                        <Onboarding />
+                      </ProtectedRoute>
+                    } />
                     <Route path="/dashboard" element={
                       <ProtectedRoute>
                         <Index />
@@ -121,6 +129,11 @@ const App = () => (
                     <Route path="/profile" element={
                       <ProtectedRoute>
                         <UserProfile />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="/admin" element={
+                      <ProtectedRoute>
+                        <AdminDashboard />
                       </ProtectedRoute>
                     } />
                     {/* Redirect /index to /dashboard */}

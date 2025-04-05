@@ -1,21 +1,63 @@
 
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
-import Header from "@/components/Header";
-import SideNavigation from "@/components/SideNavigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/contexts/AuthContext";
 import { Helmet } from "react-helmet-async";
 import { useIsMobile } from "@/hooks/use-mobile";
-import UserStats from "@/components/UserStats";
-import SkillsSection from "@/components/SkillsSection";
 import { Search, Star, GitPullRequest, BookOpen } from "lucide-react";
+import SideNavigation from "@/components/SideNavigation";
+import HeaderWithNotifications from "@/components/HeaderWithNotifications";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// Lazy-loaded components for performance optimization
+const UserStats = lazy(() => import("@/components/UserStats"));
+const SkillsSection = lazy(() => import("@/components/SkillsSection"));
+
+// Skeleton loaders for lazy-loaded components
+const UserStatsSkeleton = () => (
+  <Card className="bg-card border-none shadow-sm">
+    <CardHeader className="pb-2">
+      <Skeleton className="h-6 w-40" />
+    </CardHeader>
+    <CardContent>
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+        <Skeleton className="h-20 w-full" />
+      </div>
+    </CardContent>
+  </Card>
+);
+
+const SkillsSectionSkeleton = () => (
+  <Card className="bg-card border-none shadow-sm">
+    <CardHeader className="pb-2">
+      <Skeleton className="h-6 w-32" />
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+      </div>
+    </CardContent>
+  </Card>
+);
 
 const Index = () => {
   const { isAuthenticated, currentUser } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  // Redirect to the onboarding if user has no skills set up
+  useEffect(() => {
+    if (isAuthenticated && currentUser && (!currentUser.skills || currentUser.skills.length === 0)) {
+      navigate('/onboarding');
+    }
+  }, [isAuthenticated, currentUser, navigate]);
 
   // Redirect to the landing page if not authenticated
   useEffect(() => {
@@ -34,7 +76,7 @@ const Index = () => {
       <div className="flex min-h-screen flex-col md:flex-row bg-background">
         <SideNavigation />
         <div className="flex-1">
-          <Header />
+          <HeaderWithNotifications />
           <main className="container py-6 px-4 md:px-6">
             <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
             
@@ -70,7 +112,9 @@ const Index = () => {
                   </CardContent>
                 </Card>
                 
-                <UserStats />
+                <Suspense fallback={<UserStatsSkeleton />}>
+                  <UserStats />
+                </Suspense>
                 
                 <Card className="bg-card border-none shadow-sm">
                   <CardHeader className="pb-2">
@@ -105,7 +149,9 @@ const Index = () => {
               </div>
               
               <div className="space-y-6">
-                <SkillsSection />
+                <Suspense fallback={<SkillsSectionSkeleton />}>
+                  <SkillsSection />
+                </Suspense>
                 
                 <Card className="bg-card border-none shadow-sm">
                   <CardHeader className="pb-2">
@@ -128,6 +174,39 @@ const Index = () => {
                     </div>
                   </CardContent>
                 </Card>
+                
+                {!isMobile && (
+                  <Card className="bg-card border-none shadow-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-lg">Your Badges</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="text-center p-2 rounded-lg bg-muted/50">
+                          <div className="bg-primary/10 h-10 w-10 flex items-center justify-center rounded-full mx-auto mb-2">
+                            <Star className="h-5 w-5 text-primary" />
+                          </div>
+                          <p className="text-xs font-medium">First Contribution</p>
+                        </div>
+                        <div className="text-center p-2 rounded-lg bg-muted/50">
+                          <div className="bg-primary/10 h-10 w-10 flex items-center justify-center rounded-full mx-auto mb-2">
+                            <GitPullRequest className="h-5 w-5 text-primary" />
+                          </div>
+                          <p className="text-xs font-medium">Bug Hunter</p>
+                        </div>
+                      </div>
+                      <div className="text-center mt-2">
+                        <Button 
+                          variant="link" 
+                          className="text-xs" 
+                          onClick={() => navigate('/skills')}
+                        >
+                          View All Badges
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
               </div>
             </div>
           </main>
