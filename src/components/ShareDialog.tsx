@@ -4,12 +4,12 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { GitHubRepository } from '@/services/github';
-import { Copy, Twitter, Linkedin, Facebook, Share2 } from 'lucide-react';
+import { Repository } from '@/types';
+import { Copy, Twitter, Linkedin, Facebook } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface ShareDialogProps {
-  repository: GitHubRepository | null;
+  repository: Repository | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -20,8 +20,8 @@ const ShareDialog = ({ repository, isOpen, onClose }: ShareDialogProps) => {
   
   if (!repository) return null;
   
-  const shareUrl = repository.html_url;
-  const shareTitle = `Check out this open source project: ${repository.full_name}`;
+  const shareUrl = repository.url || repository.html_url || '';
+  const shareTitle = `Check out this open source project: ${repository.full_name || repository.name}`;
   const shareText = repository.description ? 
     `${shareTitle} - ${repository.description}` : 
     shareTitle;
@@ -67,7 +67,7 @@ const ShareDialog = ({ repository, isOpen, onClose }: ShareDialogProps) => {
           <p className="text-sm text-muted-foreground mt-1">{repository.description}</p>
           <div className="flex items-center gap-2 mt-2">
             <span className="text-xs px-2 py-0.5 bg-primary/10 rounded-full">{repository.language || 'No language'}</span>
-            <span className="text-xs px-2 py-0.5 bg-primary/10 rounded-full">⭐ {repository.stargazers_count}</span>
+            <span className="text-xs px-2 py-0.5 bg-primary/10 rounded-full">⭐ {repository.stars || repository.stargazers_count || 0}</span>
           </div>
         </div>
         <div className="grid gap-4">
