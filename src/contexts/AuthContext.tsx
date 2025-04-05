@@ -1,9 +1,8 @@
-
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Session } from '@supabase/supabase-js';
 import { useToast } from '@/hooks/use-toast';
-import { Skill, ExperienceLevel } from '@/types';
+import { Skill, ExperienceLevel, Repository, Contribution, Badge } from '@/types';
 
 export interface AuthUser {
   id: string;
@@ -16,7 +15,13 @@ export interface AuthUser {
   experienceLevel?: ExperienceLevel;
   projectTypes?: string[];
   contributionGoals?: string[];
-  savedRepositories?: { id: number; date: string }[];
+  savedRepositories?: { id: number; date: string; repository?: Repository }[];
+  // Add missing properties to match the User type
+  githubUrl?: string;
+  areasOfInterest?: string[];
+  contributions?: Contribution[];
+  badges?: Badge[];
+  contributionPoints?: number;
 }
 
 interface AuthContextType {
@@ -97,6 +102,11 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       projectTypes: user.user_metadata?.projectTypes || [],
       contributionGoals: user.user_metadata?.contributionGoals || [],
       savedRepositories: user.user_metadata?.savedRepositories || [],
+      githubUrl: user.user_metadata?.githubUrl || '',
+      areasOfInterest: user.user_metadata?.areasOfInterest || [],
+      contributions: user.user_metadata?.contributions || [],
+      badges: user.user_metadata?.badges || [],
+      contributionPoints: user.user_metadata?.contributionPoints || 0,
     };
 
     setCurrentUser(mappedUser);

@@ -4,18 +4,20 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { ThumbsUp, ThumbsDown, Bookmark, Eye, EyeOff, Share2 } from 'lucide-react';
-import { RepositoryFeedbackType } from '@/types';
+import { RepositoryFeedbackType, Repository } from '@/types';
+import { GitHubRepository } from '@/services/github';
 
 interface RepositoryFeedbackButtonsProps {
   repositoryId: number;
   onFeedback: (type: RepositoryFeedbackType) => Promise<void>;
-  onShare: () => void;
-  feedbackState: {
+  onShare?: () => void;
+  feedbackState?: {
     liked: boolean;
     disliked: boolean;
     saved: boolean;
     hidden: boolean;
   };
+  repository?: Repository | GitHubRepository;
   size?: 'sm' | 'default';
   className?: string;
 }
@@ -23,8 +25,13 @@ interface RepositoryFeedbackButtonsProps {
 const RepositoryFeedbackButtons = ({
   repositoryId,
   onFeedback,
-  onShare,
-  feedbackState,
+  onShare = () => {},
+  feedbackState = {
+    liked: false,
+    disliked: false,
+    saved: false,
+    hidden: false
+  },
   size = 'default',
   className = ''
 }: RepositoryFeedbackButtonsProps) => {

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import SideNavigation from '@/components/SideNavigation';
@@ -12,7 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { EditIcon, Github, Link2, Calendar, User, Star, GitPullRequest, BookMarked, Award } from 'lucide-react';
 import { format } from 'date-fns';
-import { Skill, SkillLevel, SkillCategory, ExperienceLevel, ContributionStatus } from '@/types';
+import { Skill, SkillLevel, SkillCategory, ExperienceLevel, ContributionStatus, User as UserType } from '@/types';
 import UserSkillsVisualization from '@/components/UserSkillsVisualization';
 import GithubConnectionStatus from '@/components/GithubConnectionStatus';
 import ContributionHistory from '@/components/ContributionHistory';
@@ -99,29 +100,29 @@ export default function UserProfile() {
                   <div className="space-y-2">
                     <h3 className="text-sm font-medium text-muted-foreground">Experience Level</h3>
                     <div>
-                      <Badge variant={currentUser.experienceLevel === ExperienceLevel.Beginner ? "default" : 
-                                     currentUser.experienceLevel === ExperienceLevel.Intermediate ? "secondary" : 
+                      <Badge variant={userWithDefaults.experienceLevel === ExperienceLevel.Beginner ? "default" : 
+                                     userWithDefaults.experienceLevel === ExperienceLevel.Intermediate ? "secondary" : 
                                      "outline"}>
-                        {currentUser.experienceLevel || ExperienceLevel.Beginner}
+                        {userWithDefaults.experienceLevel || ExperienceLevel.Beginner}
                       </Badge>
                     </div>
                   </div>
                   
-                  <GithubConnectionStatus user={currentUser} />
+                  <GithubConnectionStatus user={userWithDefaults as UserType} />
                 </div>
                 
                 <Separator className="my-4" />
                 
-                <UserSkillsVisualization skills={currentUser.skills} />
+                <UserSkillsVisualization skills={userWithDefaults.skills || []} />
                 
-                {userWithDefaults.badges.length > 0 && (
+                {userWithDefaults.badges && userWithDefaults.badges.length > 0 && (
                   <>
                     <Separator className="my-4" />
                     <UserBadges badges={userWithDefaults.badges} />
                   </>
                 )}
                 
-                {userWithDefaults.contributionPoints > 0 && (
+                {userWithDefaults.contributionPoints && userWithDefaults.contributionPoints > 0 && (
                   <div className="mt-4 p-3 bg-muted/40 rounded-lg">
                     <div className="flex justify-between items-center">
                       <h3 className="text-sm font-medium">Contribution Points</h3>
@@ -146,7 +147,7 @@ export default function UserProfile() {
               </TabsList>
               
               <TabsContent value="saved">
-                <SavedRepositories savedRepos={currentUser.savedRepositories || []} />
+                <SavedRepositories savedRepos={userWithDefaults.savedRepositories || []} />
               </TabsContent>
               
               <TabsContent value="contributions">

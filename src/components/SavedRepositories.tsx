@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { Repository, GitHubRepository } from '@/types';
+import { Repository } from '@/types';
+import { GitHubRepository } from '@/services/github';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -61,14 +62,6 @@ const SavedRepositories = ({ savedRepos }: SavedRepositoriesProps) => {
               const repo = savedRepo.repository;
               if (!repo) return null;
               
-              // Add default values for missing properties from GitHubRepository type
-              const repoWithDefaults = {
-                ...repo,
-                forks_count: repo.forks || 0,
-                updated_at: repo.lastUpdated || new Date().toISOString(),
-                open_issues_count: 0,
-              };
-              
               return (
                 <div 
                   key={savedRepo.id}
@@ -116,7 +109,7 @@ const SavedRepositories = ({ savedRepos }: SavedRepositoriesProps) => {
                     </div>
                     <div className="flex items-center gap-1 text-sm">
                       <GitBranch className="h-4 w-4" />
-                      <span>{repo.forks || 0}</span>
+                      <span>{repo.forks || repo.forks_count || 0}</span>
                     </div>
                     {repo.language && (
                       <Badge variant="outline">{repo.language}</Badge>

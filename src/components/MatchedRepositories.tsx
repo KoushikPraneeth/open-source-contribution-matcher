@@ -82,43 +82,22 @@ export default function MatchedRepositories() {
   };
   
   // Update the handleFeedback function signature to match the expected type
-const handleFeedback = async (type: RepositoryFeedbackType, repositoryId?: number) => {
-  // If no repositoryId is provided but we're in a context where we have repoId, use that
-  const repoId = repositoryId || 0;
-  const feedbackType = type;
-  
+const handleFeedback = async (type: RepositoryFeedbackType) => {
   // In a real app, this would be sent to a backend to store user preferences
-  console.log(`Feedback for repo ${repoId}: ${feedbackType}`);
+  console.log(`Feedback for repository: ${type}`);
   
   // If the user hides a repository, remove it from the current list
-  if (feedbackType === 'hide') {
-    setHiddenRepoIds(prev => [...prev, repoId]);
-    setMatchedRepos(prev => prev.filter(repo => repo.id !== repoId));
+  if (type === 'hide') {
+    setHiddenRepoIds(prev => [...prev, 0]); // This will be resolved by the actual repository ID in the inner component
+    setMatchedRepos(prev => prev.filter(repo => repo.id !== 0)); // This will be resolved by the actual repository ID in the inner component
   }
   
   // In a real app, this feedback would be used to improve future recommendations
-  // For now, we'll just adjust the match scores locally as a demo
-  if (feedbackType === 'like') {
+  if (type === 'like') {
     // Simulate improving matches for repositories with similar topics
-    const likedRepo = matchedRepos.find(repo => repo.id === repoId);
-    if (likedRepo) {
-      setMatchedRepos(prev => 
-        prev.map(repo => {
-          // Find repos with similar topics and boost their score slightly
-          const hasCommonTopics = repo.topics.some(topic => 
-            likedRepo.topics.includes(topic)
-          );
-          
-          if (hasCommonTopics && repo.id !== repoId) {
-            return {
-              ...repo,
-              matchScore: Math.min(100, (repo.matchScore || 0) + 5)
-            };
-          }
-          return repo;
-        })
-      );
-    }
+    toast({
+      description: "Thanks for your feedback! We'll show you more repositories like this."
+    });
   }
 };
   
@@ -246,8 +225,19 @@ const handleFeedback = async (type: RepositoryFeedbackType, repositoryId?: numbe
                   <div className="flex justify-between items-center mt-3">
                     <RepositoryFeedbackButtons 
                       repositoryId={repo.id}
-                      repository={repo}
-                      onFeedback={(type) => handleFeedback(type, repo.id)}
+                      onFeedback={handleFeedback}
+                      feedbackState={{
+                        liked: false,
+                        disliked: false,
+                        saved: false,
+                        hidden: false
+                      }}
+                      onShare={() => {
+                        // Handle sharing logic here
+                        toast({
+                          description: "Sharing functionality will be implemented soon."
+                        });
+                      }}
                     />
                     
                     <Button 

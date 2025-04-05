@@ -44,7 +44,7 @@ export enum ExperienceLevel {
 }
 
 export interface Repository {
-  id: string;
+  id: string | number; // Allow both string and number to be compatible with GitHubRepository
   name: string;
   description: string;
   url: string;
