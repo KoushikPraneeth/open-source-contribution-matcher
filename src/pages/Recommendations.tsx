@@ -1,178 +1,69 @@
 
-import { useState } from 'react';
-import Header from '@/components/Header';
-import SideNavigation from '@/components/SideNavigation';
-import IssueCard from '@/components/IssueCard';
-import IssueFilters from '@/components/IssueFilters';
-import MatchedRepositories from '@/components/MatchedRepositories';
-import IssueExplorer from '@/components/IssueExplorer';
-import { mockIssues, mockContributions, defaultFilters } from '@/data/mockData';
-import { Issue, IssueComplexity, ContributionStatus } from '@/types';
-import { toast } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
-import { RefreshCw, ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useState } from "react";
+import { Helmet } from "react-helmet-async";
+import Header from "@/components/Header";
+import SideNavigation from "@/components/SideNavigation";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import RecommendedRepos from "@/components/RecommendedRepos";
+import EnhancedIssueExplorer from "@/components/EnhancedIssueExplorer";
 
-const Recommendations = () => {
-  const [filters, setFilters] = useState({
-    ...defaultFilters,
-    search: '',
-  });
-  
-  const [trackedIssues, setTrackedIssues] = useState(
-    mockContributions.map(c => c.issue.id)
-  );
-  
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  
-  const handleFilterChange = (newFilters: {
-    complexity: IssueComplexity[];
-    skills: string[];
-    labels: string[];
-    search: string;
-  }) => {
-    setFilters({
-      ...newFilters,
-      search: newFilters.search || '',
-    });
-  };
-  
-  const handleTrackIssue = (issue: Issue) => {
-    if (trackedIssues.includes(issue.id)) {
-      setTrackedIssues(trackedIssues.filter(id => id !== issue.id));
-      toast({
-        title: "Issue untracked",
-        description: `You are no longer tracking "${issue.title}"`,
-      });
-    } else {
-      setTrackedIssues([...trackedIssues, issue.id]);
-      toast({
-        title: "Issue tracked",
-        description: `You are now tracking "${issue.title}"`,
-      });
-    }
-  };
-  
-  const handleRefresh = () => {
-    setIsRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsRefreshing(false);
-      toast({
-        title: "Recommendations refreshed",
-        description: "Found 2 new issues matching your skills",
-      });
-    }, 1500);
-  };
-  
-  // Filter issues based on the current filters
-  const filteredIssues = mockIssues
-    .filter(issue => {
-      // Filter by complexity
-      if (filters.complexity.length > 0 && !filters.complexity.includes(issue.complexity)) {
-        return false;
-      }
-      
-      // Filter by skills
-      if (filters.skills.length > 0 && !issue.requiredSkills.some(skill => 
-        filters.skills.includes(skill)
-      )) {
-        return false;
-      }
-      
-      // Filter by labels
-      if (filters.labels.length > 0 && !issue.labels.some(label => 
-        filters.labels.includes(label.name)
-      )) {
-        return false;
-      }
-      
-      // Filter by search
-      if (filters.search && !issue.title.toLowerCase().includes(filters.search.toLowerCase())) {
-        return false;
-      }
-      
-      return true;
-    })
-    .sort((a, b) => b.matchScore - a.matchScore);
+export default function Recommendations() {
+  const [activeTab, setActiveTab] = useState<string>("repositories");
   
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
-      <div className="flex">
-        <SideNavigation />
-        <main className="flex-1 p-4 md:p-6">
-          <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex items-center gap-2">
-              <Link to="/">
-                <Button variant="ghost" size="icon">
-                  <ArrowLeft className="h-5 w-5" />
-                </Button>
-              </Link>
+    <>
+      <Helmet>
+        <title>Recommendations | ContribSpark</title>
+        <meta name="description" content="Discover open source projects that match your skills and interests. Find beginner-friendly issues to contribute to." />
+      </Helmet>
+      
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="flex flex-col md:flex-row">
+          <SideNavigation />
+          <main className="flex-1 p-4 md:p-6">
+            <div className="max-w-6xl mx-auto space-y-6">
               <h1 className="text-2xl font-bold">Recommendations</h1>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <p className="text-muted-foreground">
-                Personalized recommendations based on your skills and interests
-              </p>
               
-              <Button 
-                variant="outline" 
-                onClick={handleRefresh}
-                disabled={isRefreshing}
-                className="flex items-center gap-2"
+              <Card className="bg-card border-none shadow-sm">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg">Find Your Next Contribution</CardTitle>
+                  <CardDescription>
+                    Discover repositories and issues that match your skills and interests
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Our matching algorithm finds open source projects and specific issues where 
+                    your skills and experience can make the greatest impact. Save repositories 
+                    you're interested in or jump directly to an issue to start contributing!
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Tabs 
+                defaultValue="repositories" 
+                onValueChange={setActiveTab}
+                value={activeTab}
               >
-                <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                Refresh
-              </Button>
-            </div>
-            
-            <Tabs defaultValue="repositories" className="w-full">
-              <TabsList className="mb-4">
-                <TabsTrigger value="repositories">Repositories</TabsTrigger>
-                <TabsTrigger value="issues">Issue Recommendations</TabsTrigger>
-                <TabsTrigger value="explorer">Issue Explorer</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="repositories">
-                <MatchedRepositories />
-              </TabsContent>
-              
-              <TabsContent value="issues" className="space-y-6">
-                <IssueFilters onFilterChange={handleFilterChange} />
+                <TabsList className="mb-4">
+                  <TabsTrigger value="repositories">Repositories</TabsTrigger>
+                  <TabsTrigger value="issues">Issues</TabsTrigger>
+                </TabsList>
                 
-                <div className="grid gap-4">
-                  {filteredIssues.length > 0 ? (
-                    filteredIssues.map(issue => (
-                      <IssueCard
-                        key={issue.id}
-                        issue={issue}
-                        isTracking={trackedIssues.includes(issue.id)}
-                        onTrack={handleTrackIssue}
-                      />
-                    ))
-                  ) : (
-                    <div className="text-center py-12 bg-muted rounded-lg">
-                      <h3 className="font-medium text-lg">No matching issues found</h3>
-                      <p className="text-muted-foreground mt-2">
-                        Try adjusting your filters or checking back later
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="explorer">
-                <IssueExplorer />
-              </TabsContent>
-            </Tabs>
-          </div>
-        </main>
+                <TabsContent value="repositories">
+                  <RecommendedRepos />
+                </TabsContent>
+                
+                <TabsContent value="issues">
+                  <EnhancedIssueExplorer />
+                </TabsContent>
+              </Tabs>
+            </div>
+          </main>
+        </div>
       </div>
-    </div>
+    </>
   );
-};
-
-export default Recommendations;
+}

@@ -10,23 +10,21 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { EditIcon, Github, Link2, Calendar, User } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
+import { EditIcon, Github, Link2, Calendar, User, Star, GitPullRequest, BookMarked, Award } from 'lucide-react';
 import { format } from 'date-fns';
-import { Skill, SkillLevel, SkillCategory, ExperienceLevel } from '@/types';
+import { Skill, SkillLevel, SkillCategory, ExperienceLevel, ContributionStatus } from '@/types';
+import UserSkillsVisualization from '@/components/UserSkillsVisualization';
+import GithubConnectionStatus from '@/components/GithubConnectionStatus';
+import ContributionHistory from '@/components/ContributionHistory';
+import SavedRepositories from '@/components/SavedRepositories';
+import UserBadges from '@/components/UserBadges';
+import UserStats from '@/components/UserStats';
+import { Helmet } from "react-helmet-async";
 
 export default function UserProfile() {
   const { currentUser } = useAuth();
   const { userProfile, userRepositories, isLoading } = useGitHub();
-  const [savedRepos, setSavedRepos] = useState<any[]>([]);
-  
-  useEffect(() => {
-    // In a real app, fetch saved repositories from the database
-    // For demo purposes, using mock data from localStorage
-    const savedReposFromStorage = localStorage.getItem('savedRepositories');
-    if (savedReposFromStorage) {
-      setSavedRepos(JSON.parse(savedReposFromStorage));
-    }
-  }, []);
   
   if (!currentUser) {
     return (
@@ -50,6 +48,11 @@ export default function UserProfile() {
   
   return (
     <div className="min-h-screen bg-background">
+      <Helmet>
+        <title>User Profile | ContribSpark</title>
+        <meta name="description" content="View and manage your ContribSpark profile, skills, and contributions." />
+      </Helmet>
+      
       <Header />
       <div className="flex">
         <SideNavigation />
@@ -95,52 +98,36 @@ export default function UserProfile() {
                     </div>
                   </div>
                   
-                  {currentUser.isGithubConnected && currentUser.githubUsername && (
-                    <div className="space-y-2">
-                      <h3 className="text-sm font-medium text-muted-foreground">GitHub</h3>
-                      <div className="flex items-center gap-2">
-                        <Github className="h-4 w-4" />
-                        <a 
-                          href={`https://github.com/${currentUser.githubUsername}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-sm text-primary hover:underline flex items-center gap-1"
-                        >
-                          {currentUser.githubUsername}
-                          <Link2 className="h-3 w-3" />
-                        </a>
-                      </div>
-                    </div>
-                  )}
+                  <GithubConnectionStatus user={currentUser} />
                 </div>
                 
                 <Separator className="my-4" />
                 
-                <div className="space-y-3">
-                  <h3 className="text-sm font-medium">Skills</h3>
-                  {currentUser.skills && currentUser.skills.length > 0 ? (
-                    <div className="flex flex-wrap gap-2">
-                      {currentUser.skills.map((skill, index) => (
-                        <Badge 
-                          key={index}
-                          variant={skill.category === SkillCategory.Language ? "default" :
-                                  skill.category === SkillCategory.Framework ? "secondary" :
-                                  "outline"}
-                          className="px-2 py-1"
-                        >
-                          {skill.name}
-                          <span className="ml-1 text-xs opacity-70">
-                            ({skill.level})
-                          </span>
-                        </Badge>
-                      ))}
+                <UserSkillsVisualization skills={currentUser.skills} />
+                
+                {currentUser.badges && currentUser.badges.length > 0 && (
+                  <>
+                    <Separator className="my-4" />
+                    <UserBadges badges={currentUser.badges} />
+                  </>
+                )}
+                
+                {currentUser.contributionPoints && (
+                  <div className="mt-4 p-3 bg-muted/40 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <h3 className="text-sm font-medium">Contribution Points</h3>
+                      <span className="font-bold">{currentUser.contributionPoints}</span>
                     </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">No skills added yet.</p>
-                  )}
-                </div>
+                    <Progress 
+                      value={Math.min(currentUser.contributionPoints / 10, 100)} 
+                      className="h-2 mt-2" 
+                    />
+                  </div>
+                )}
               </CardContent>
             </Card>
+            
+            <UserStats />
             
             <Tabs defaultValue="saved">
               <TabsList className="mb-4">
@@ -150,72 +137,11 @@ export default function UserProfile() {
               </TabsList>
               
               <TabsContent value="saved">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Saved Repositories</CardTitle>
-                    <CardDescription>
-                      Repositories you've saved for later
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    {savedRepos.length > 0 ? (
-                      <div className="grid gap-4">
-                        {savedRepos.map((repo) => (
-                          <div 
-                            key={repo.id}
-                            className="flex items-start p-3 rounded-lg hover:bg-muted transition-colors"
-                          >
-                            <div className="flex-grow">
-                              <h3 className="font-medium">
-                                <a 
-                                  href={repo.html_url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="hover:underline"
-                                >
-                                  {repo.full_name}
-                                </a>
-                              </h3>
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {repo.description || "No description provided"}
-                              </p>
-                              <div className="flex items-center gap-2 mt-2">
-                                <Badge variant="outline">{repo.language}</Badge>
-                                <span className="text-xs text-muted-foreground">
-                                  Saved on {format(new Date(repo.savedAt || new Date()), 'MMM d, yyyy')}
-                                </span>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="text-center py-8 bg-muted/50 rounded-lg">
-                        <p className="text-muted-foreground">
-                          You haven't saved any repositories yet.
-                        </p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                <SavedRepositories savedRepos={currentUser.savedRepositories || []} />
               </TabsContent>
               
               <TabsContent value="contributions">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Your Contributions</CardTitle>
-                    <CardDescription>
-                      Track your open source contributions
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="text-center py-8 bg-muted/50 rounded-lg">
-                      <p className="text-muted-foreground">
-                        Your contributions will appear here once you start contributing to open source projects.
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
+                <ContributionHistory contributions={currentUser.contributions || []} />
               </TabsContent>
               
               <TabsContent value="history">

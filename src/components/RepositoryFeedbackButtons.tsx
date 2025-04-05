@@ -1,171 +1,147 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Button } from '@/components/ui/button';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { ThumbsUp, ThumbsDown, BookmarkPlus, XCircle, Share2, Check } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import ShareDialog from './ShareDialog';
-import { GitHubRepository } from '@/services/github';
-import { useAuth } from '@/contexts/AuthContext';
+import { ThumbsUp, ThumbsDown, Bookmark, Eye, EyeOff, Share2 } from 'lucide-react';
+import { RepositoryFeedbackType } from '@/types';
 
-export interface RepositoryFeedbackProps {
+interface RepositoryFeedbackButtonsProps {
   repositoryId: number;
-  repository?: GitHubRepository;
-  onFeedback: (repoId: number, feedbackType: 'like' | 'dislike' | 'save' | 'hide') => void;
+  onFeedback: (type: RepositoryFeedbackType) => Promise<void>;
+  onShare: () => void;
+  feedbackState: {
+    liked: boolean;
+    disliked: boolean;
+    saved: boolean;
+    hidden: boolean;
+  };
+  size?: 'sm' | 'default';
   className?: string;
 }
 
-export default function RepositoryFeedbackButtons({ 
-  repositoryId, 
-  repository,
+const RepositoryFeedbackButtons = ({
+  repositoryId,
   onFeedback,
-  className 
-}: RepositoryFeedbackProps) {
+  onShare,
+  feedbackState,
+  size = 'default',
+  className = ''
+}: RepositoryFeedbackButtonsProps) => {
   const { toast } = useToast();
-  const { currentUser, updateUserProfile } = useAuth();
-  const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [userFeedback, setUserFeedback] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
   
-  // Check if the repo is already saved
-  useEffect(() => {
-    if (currentUser?.savedRepositories) {
-      const isSaved = currentUser.savedRepositories.some(
-        repo => repo.id === repositoryId
-      );
-      setSaved(isSaved);
-    }
-  }, [currentUser, repositoryId]);
-  
-  const handleFeedback = async (type: 'like' | 'dislike' | 'save' | 'hide') => {
-    // Call the parent component's feedback handler
-    onFeedback(repositoryId, type);
-    
-    // If the feedback is 'save', update the user's saved repositories
-    if (type === 'save' && currentUser) {
-      // Toggle saved status
-      if (saved) {
-        // Remove from saved repositories
-        const updatedSavedRepos = currentUser.savedRepositories?.filter(
-          repo => repo.id !== repositoryId
-        ) || [];
-        
-        try {
-          await updateUserProfile({
-            ...currentUser,
-            savedRepositories: updatedSavedRepos
-          });
-          setSaved(false);
-        } catch (error) {
-          console.error("Failed to remove repository from saved list:", error);
-        }
-        
-        toast({ description: "Repository removed from saved list." });
-      } else {
-        // Add to saved repositories
-        const updatedSavedRepos = [
-          ...(currentUser.savedRepositories || []),
-          { id: repositoryId, date: new Date().toISOString() }
-        ];
-        
-        try {
-          await updateUserProfile({
-            ...currentUser,
-            savedRepositories: updatedSavedRepos
-          });
-          setSaved(true);
-        } catch (error) {
-          console.error("Failed to save repository:", error);
-        }
-        
-        toast({ description: "Repository saved for later." });
-      }
-    } else {
-      // Set active feedback state for like/dislike
-      if (type === 'like' || type === 'dislike') {
-        if (userFeedback === type) {
-          // Toggle off if clicking the same button
-          setUserFeedback(null);
-        } else {
-          setUserFeedback(type);
-        }
-      }
+  const handleFeedback = async (type: RepositoryFeedbackType) => {
+    try {
+      await onFeedback(type);
       
-      // Show appropriate toast messages
       const messages = {
-        like: "You liked this repository. We'll show more like this!",
-        dislike: "You disliked this repository. We'll show fewer like this.",
-        save: saved ? "Repository removed from saved list." : "Repository saved for later.",
-        hide: "Repository hidden. We won't show it again."
+        'like': feedbackState.liked ? 'Removed like from repository' : 'Repository liked! We\'ll show you more like this',
+        'dislike': feedbackState.disliked ? 'Removed dislike from repository' : 'Repository disliked. We\'ll show fewer like this',
+        'save': feedbackState.saved ? 'Repository removed from saved items' : 'Repository saved to your profile',
+        'hide': feedbackState.hidden ? 'Repository unhidden' : 'Repository hidden from your recommendations'
       };
       
       toast({ description: messages[type] });
+    } catch (error) {
+      toast({ 
+        title: 'Error',
+        description: 'Failed to save your feedback',
+        variant: 'destructive'
+      });
     }
   };
   
+  const buttonSize = size === 'sm' ? 'h-8 w-8' : 'h-9 w-9';
+  
   return (
-    <>
-      <div className={cn("flex items-center gap-1", className)}>
-        <Button 
-          variant={userFeedback === 'like' ? "default" : "ghost"} 
-          size="icon" 
-          className={cn("h-8 w-8 rounded-full", userFeedback === 'like' ? "bg-green-100 text-green-700 hover:bg-green-200 hover:text-green-800" : "")} 
-          onClick={() => handleFeedback('like')}
-          title="I like this"
-        >
-          <ThumbsUp className="h-4 w-4" />
-        </Button>
+    <div className={`flex items-center gap-1 ${className}`}>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={buttonSize}
+              onClick={() => handleFeedback('like')}
+            >
+              <ThumbsUp className={`h-4 w-4 ${feedbackState.liked ? 'fill-current text-primary' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {feedbackState.liked ? 'Unlike repository' : 'Like repository'}
+          </TooltipContent>
+        </Tooltip>
         
-        <Button 
-          variant={userFeedback === 'dislike' ? "default" : "ghost"} 
-          size="icon" 
-          className={cn("h-8 w-8 rounded-full", userFeedback === 'dislike' ? "bg-red-100 text-red-700 hover:bg-red-200 hover:text-red-800" : "")} 
-          onClick={() => handleFeedback('dislike')}
-          title="Not relevant"
-        >
-          <ThumbsDown className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={buttonSize}
+              onClick={() => handleFeedback('dislike')}
+            >
+              <ThumbsDown className={`h-4 w-4 ${feedbackState.disliked ? 'fill-current text-primary' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {feedbackState.disliked ? 'Remove dislike' : 'Dislike repository'}
+          </TooltipContent>
+        </Tooltip>
         
-        <Button 
-          variant={saved ? "default" : "ghost"} 
-          size="icon" 
-          className={cn("h-8 w-8 rounded-full", saved ? "bg-blue-100 text-blue-700 hover:bg-blue-200 hover:text-blue-800" : "")} 
-          onClick={() => handleFeedback('save')}
-          title={saved ? "Saved" : "Save for later"}
-        >
-          {saved ? <Check className="h-4 w-4" /> : <BookmarkPlus className="h-4 w-4" />}
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={buttonSize}
+              onClick={() => handleFeedback('save')}
+            >
+              <Bookmark className={`h-4 w-4 ${feedbackState.saved ? 'fill-current text-primary' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {feedbackState.saved ? 'Unsave repository' : 'Save repository'}
+          </TooltipContent>
+        </Tooltip>
         
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="h-8 w-8 rounded-full" 
-          onClick={() => handleFeedback('hide')}
-          title="Not interested"
-        >
-          <XCircle className="h-4 w-4" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={buttonSize}
+              onClick={() => handleFeedback('hide')}
+            >
+              {feedbackState.hidden ? (
+                <Eye className="h-4 w-4" />
+              ) : (
+                <EyeOff className="h-4 w-4" />
+              )}
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            {feedbackState.hidden ? 'Unhide repository' : 'Hide repository'}
+          </TooltipContent>
+        </Tooltip>
         
-        {repository && (
-          <Button 
-            variant="ghost" 
-            size="icon" 
-            className="h-8 w-8 rounded-full" 
-            onClick={() => setShareDialogOpen(true)}
-            title="Share"
-          >
-            <Share2 className="h-4 w-4" />
-          </Button>
-        )}
-      </div>
-      
-      {repository && (
-        <ShareDialog 
-          repository={repository} 
-          isOpen={shareDialogOpen} 
-          onClose={() => setShareDialogOpen(false)} 
-        />
-      )}
-    </>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className={buttonSize}
+              onClick={onShare}
+            >
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent side="bottom">
+            Share repository
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
-}
+};
+
+export default RepositoryFeedbackButtons;

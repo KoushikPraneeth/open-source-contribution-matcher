@@ -20,6 +20,11 @@ self.addEventListener('install', event => {
 
 // Cache and return requests
 self.addEventListener('fetch', event => {
+  // Don't intercept module script requests - this fixes the loading issue
+  if (event.request.url.endsWith('.js') && event.request.destination === 'script') {
+    return;
+  }
+  
   event.respondWith(
     caches.match(event.request)
       .then(response => {
