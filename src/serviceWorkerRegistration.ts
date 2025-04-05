@@ -1,11 +1,6 @@
+
 // This optional code is used to register a service worker.
 // register() is not called by default.
-
-// This lets the app load faster on subsequent visits in production, and gives
-// it offline capabilities. However, it also means that developers (and users)
-// will only see deployed updates on subsequent visits to a page, after all the
-// existing tabs open on the page have been closed, since previously cached
-// resources are updated in the background.
 
 const isLocalhost = Boolean(
   window.location.hostname === 'localhost' ||
@@ -18,6 +13,8 @@ const isLocalhost = Boolean(
 type Config = {
   onSuccess?: (registration: ServiceWorkerRegistration) => void;
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
+  onOffline?: () => void;
+  onOnline?: () => void;
 };
 
 export function register(config?: Config) {
@@ -41,6 +38,9 @@ export function register(config?: Config) {
         // Is not localhost. Just register service worker
         registerValidSW(swUrl, config);
       }
+      
+      // Set up online/offline listeners
+      setupConnectivityListeners(config);
     });
   }
 }
@@ -49,6 +49,13 @@ function registerValidSW(swUrl: string, config?: Config) {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
+      // Listen for messages from the service worker
+      navigator.serviceWorker.addEventListener('message', (event) => {
+        if (event.data && event.data.type === 'SYNC_COMPLETE') {
+          console.log('Data sync completed at', event.data.timestamp);
+        }
+      });
+      
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
@@ -114,7 +121,36 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
     })
     .catch(() => {
       console.log('No internet connection found. App is running in offline mode.');
+      if (config && config.onOffline) {
+        config.onOffline();
+      }
     });
+}
+
+function setupConnectivityListeners(config?: Config) {
+  // Handle online event
+  window.addEventListener('online', () => {
+    console.log('Application is online. Syncing data...');
+    if (config && config.onOnline) {
+      config.onOnline();
+    }
+    
+    // Trigger a sync event when going back online
+    if ('serviceWorker' in navigator && 'SyncManager' in window) {
+      navigator.serviceWorker.ready.then((registration) => {
+        // @ts-ignore - TypeScript doesn't recognize SyncManager yet
+        registration.sync.register('sync-user-data');
+      });
+    }
+  });
+  
+  // Handle offline event
+  window.addEventListener('offline', () => {
+    console.log('Application is offline. Some features may be limited.');
+    if (config && config.onOffline) {
+      config.onOffline();
+    }
+  });
 }
 
 export function unregister() {

@@ -9,11 +9,16 @@ import SkillsVisualization from "@/components/SkillsVisualization";
 import GamificationSystem from "@/components/GamificationSystem";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useOnlineStatus } from "@/hooks/use-online-status";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { WifiOff } from "lucide-react";
+import ContributionTimeline from "@/components/ContributionTimeline";
 
 const SkillsGrowth = () => {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, currentUser } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const isOnline = useOnlineStatus();
   
   // Redirect to sign in if not authenticated
   useEffect(() => {
@@ -36,14 +41,31 @@ const SkillsGrowth = () => {
           <main className="container py-6 px-4 md:px-6">
             <h1 className="text-2xl font-semibold mb-6">Skills & Achievements</h1>
             
+            {!isOnline && (
+              <Alert variant="destructive" className="mb-6">
+                <WifiOff className="h-4 w-4" />
+                <AlertTitle>You are offline</AlertTitle>
+                <AlertDescription>
+                  Some features may be limited. Data shown may not be up to date.
+                </AlertDescription>
+              </Alert>
+            )}
+            
             <Tabs defaultValue="skills" className="space-y-6">
               <TabsList className="mb-2">
                 <TabsTrigger value="skills">Skills Analysis</TabsTrigger>
+                <TabsTrigger value="timeline">Contribution Timeline</TabsTrigger>
                 <TabsTrigger value="achievements">Achievements</TabsTrigger>
               </TabsList>
               
               <TabsContent value="skills">
                 <SkillsVisualization />
+              </TabsContent>
+              
+              <TabsContent value="timeline">
+                <ContributionTimeline 
+                  contributions={currentUser?.contributions || []}
+                />
               </TabsContent>
               
               <TabsContent value="achievements">
