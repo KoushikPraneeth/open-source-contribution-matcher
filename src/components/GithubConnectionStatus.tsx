@@ -11,32 +11,13 @@ interface GithubConnectionStatusProps {
 }
 
 const GithubConnectionStatus = ({ user }: GithubConnectionStatusProps) => {
-  const { connectGithub } = useAuth();
   const { toast } = useToast();
   
   const handleConnectGithub = async () => {
-    if (!connectGithub) {
-      toast({
-        title: "Error",
-        description: "GitHub connection functionality is not available",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    try {
-      await connectGithub();
-      toast({
-        title: "Success",
-        description: "Your GitHub account has been connected"
-      });
-    } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect GitHub account",
-        variant: "destructive"
-      });
-    }
+    toast({
+      title: "Info",
+      description: "GitHub connection functionality is not available in the demo version",
+    });
   };
   
   if (user.isGithubConnected && user.githubUsername) {

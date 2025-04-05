@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/t
 import { format } from 'date-fns';
 
 interface UserBadgesProps {
-  badges: BadgeType[];
+  badges?: BadgeType[];
 }
 
 const UserBadges = ({ badges }: UserBadgesProps) => {

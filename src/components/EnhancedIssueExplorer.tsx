@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -161,12 +160,12 @@ export default function EnhancedIssueExplorer({ repositoryFullName }: EnhancedIs
         break;
       case "most-commented":
         filtered = filtered.sort((a, b) => 
-          (b.comments || 0) - (a.comments || 0)
+          ((b.comments || 0) - (a.comments || 0))
         );
         break;
       case "least-commented":
         filtered = filtered.sort((a, b) => 
-          (a.comments || 0) - (b.comments || 0)
+          ((a.comments || 0) - (b.comments || 0))
         );
         break;
       default:
@@ -491,7 +490,7 @@ export default function EnhancedIssueExplorer({ repositoryFullName }: EnhancedIs
                         Created {format(new Date(issue.created_at), 'MMM d, yyyy')}
                       </div>
                       
-                      {issue.comments > 0 && (
+                      {issue.comments !== undefined && issue.comments > 0 && (
                         <div className="flex items-center">
                           <MessageSquare className="h-3.5 w-3.5 mr-1" />
                           {issue.comments} comments

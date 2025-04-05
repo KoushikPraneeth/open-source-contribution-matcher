@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   username: string;
@@ -62,6 +61,9 @@ export interface Repository {
   html_url?: string;
   full_name?: string;
   stargazers_count?: number;
+  forks_count?: number;
+  updated_at?: string;
+  open_issues_count?: number;
 }
 
 export interface Issue {

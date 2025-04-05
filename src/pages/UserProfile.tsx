@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import SideNavigation from '@/components/SideNavigation';
@@ -45,6 +44,16 @@ export default function UserProfile() {
       </div>
     );
   }
+
+  // Add default values for missing user properties in the UserProfile component
+  const userWithDefaults = {
+    ...currentUser,
+    badges: currentUser?.badges || [],
+    contributionPoints: currentUser?.contributionPoints || 0,
+    contributions: currentUser?.contributions || [],
+    githubUrl: currentUser?.githubUrl || '',
+    areasOfInterest: currentUser?.areasOfInterest || []
+  };
   
   return (
     <div className="min-h-screen bg-background">
@@ -105,21 +114,21 @@ export default function UserProfile() {
                 
                 <UserSkillsVisualization skills={currentUser.skills} />
                 
-                {currentUser.badges && currentUser.badges.length > 0 && (
+                {userWithDefaults.badges.length > 0 && (
                   <>
                     <Separator className="my-4" />
-                    <UserBadges badges={currentUser.badges} />
+                    <UserBadges badges={userWithDefaults.badges} />
                   </>
                 )}
                 
-                {currentUser.contributionPoints && (
+                {userWithDefaults.contributionPoints > 0 && (
                   <div className="mt-4 p-3 bg-muted/40 rounded-lg">
                     <div className="flex justify-between items-center">
                       <h3 className="text-sm font-medium">Contribution Points</h3>
-                      <span className="font-bold">{currentUser.contributionPoints}</span>
+                      <span className="font-bold">{userWithDefaults.contributionPoints}</span>
                     </div>
                     <Progress 
-                      value={Math.min(currentUser.contributionPoints / 10, 100)} 
+                      value={Math.min(userWithDefaults.contributionPoints / 10, 100)} 
                       className="h-2 mt-2" 
                     />
                   </div>
@@ -141,7 +150,7 @@ export default function UserProfile() {
               </TabsContent>
               
               <TabsContent value="contributions">
-                <ContributionHistory contributions={currentUser.contributions || []} />
+                <ContributionHistory contributions={userWithDefaults.contributions || []} />
               </TabsContent>
               
               <TabsContent value="history">

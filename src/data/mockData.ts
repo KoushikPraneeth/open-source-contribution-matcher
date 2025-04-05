@@ -1,4 +1,3 @@
-
 import { 
   User, 
   Skill, 
@@ -27,6 +26,12 @@ export const mockUser: User = {
   ],
   experienceLevel: ExperienceLevel.Beginner,
   areasOfInterest: ['Web Development', 'UI/UX', 'Open Source'],
+  projectTypes: ['Frontend', 'Full Stack', 'Libraries'],
+  contributionGoals: ['Learn new skills', 'Build portfolio', 'Help others'],
+  contributions: [],
+  savedRepositories: [],
+  contributionPoints: 0,
+  badges: []
 };
 
 export const mockRepositories: Repository[] = [

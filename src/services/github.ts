@@ -36,6 +36,7 @@ export interface GitHubIssue {
   }>;
   body: string | null;
   repository_url: string;
+  comments?: number; // Add this missing property
 }
 
 class GitHubService {

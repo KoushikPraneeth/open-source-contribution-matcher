@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { 
   Card, 
@@ -24,7 +23,7 @@ import { useGitHub } from '@/hooks/useGitHub';
 import { useAuth } from '@/contexts/AuthContext';
 import { GitHubRepository } from '@/services/github';
 import { format } from 'date-fns';
-import { Skill } from '@/types';
+import { Skill, RepositoryFeedbackType } from '@/types';
 import RepositoryFeedbackButtons from './RepositoryFeedbackButtons';
 
 export default function MatchedRepositories() {
@@ -82,41 +81,46 @@ export default function MatchedRepositories() {
     setMinMatchScore(parseInt(value));
   };
   
-  const handleFeedback = (repoId: number, feedbackType: 'like' | 'dislike' | 'save' | 'hide') => {
-    // In a real app, this would be sent to a backend to store user preferences
-    console.log(`Feedback for repo ${repoId}: ${feedbackType}`);
-    
-    // If the user hides a repository, remove it from the current list
-    if (feedbackType === 'hide') {
-      setHiddenRepoIds(prev => [...prev, repoId]);
-      setMatchedRepos(prev => prev.filter(repo => repo.id !== repoId));
+  // Update the handleFeedback function signature to match the expected type
+const handleFeedback = async (type: RepositoryFeedbackType, repositoryId?: number) => {
+  // If no repositoryId is provided but we're in a context where we have repoId, use that
+  const repoId = repositoryId || 0;
+  const feedbackType = type;
+  
+  // In a real app, this would be sent to a backend to store user preferences
+  console.log(`Feedback for repo ${repoId}: ${feedbackType}`);
+  
+  // If the user hides a repository, remove it from the current list
+  if (feedbackType === 'hide') {
+    setHiddenRepoIds(prev => [...prev, repoId]);
+    setMatchedRepos(prev => prev.filter(repo => repo.id !== repoId));
+  }
+  
+  // In a real app, this feedback would be used to improve future recommendations
+  // For now, we'll just adjust the match scores locally as a demo
+  if (feedbackType === 'like') {
+    // Simulate improving matches for repositories with similar topics
+    const likedRepo = matchedRepos.find(repo => repo.id === repoId);
+    if (likedRepo) {
+      setMatchedRepos(prev => 
+        prev.map(repo => {
+          // Find repos with similar topics and boost their score slightly
+          const hasCommonTopics = repo.topics.some(topic => 
+            likedRepo.topics.includes(topic)
+          );
+          
+          if (hasCommonTopics && repo.id !== repoId) {
+            return {
+              ...repo,
+              matchScore: Math.min(100, (repo.matchScore || 0) + 5)
+            };
+          }
+          return repo;
+        })
+      );
     }
-    
-    // In a real app, this feedback would be used to improve future recommendations
-    // For now, we'll just adjust the match scores locally as a demo
-    if (feedbackType === 'like') {
-      // Simulate improving matches for repositories with similar topics
-      const likedRepo = matchedRepos.find(repo => repo.id === repoId);
-      if (likedRepo) {
-        setMatchedRepos(prev => 
-          prev.map(repo => {
-            // Find repos with similar topics and boost their score slightly
-            const hasCommonTopics = repo.topics.some(topic => 
-              likedRepo.topics.includes(topic)
-            );
-            
-            if (hasCommonTopics && repo.id !== repoId) {
-              return {
-                ...repo,
-                matchScore: Math.min(100, (repo.matchScore || 0) + 5)
-              };
-            }
-            return repo;
-          })
-        );
-      }
-    }
-  };
+  }
+};
   
   return (
     <Card className="bg-card border-none shadow-sm">
@@ -243,7 +247,7 @@ export default function MatchedRepositories() {
                     <RepositoryFeedbackButtons 
                       repositoryId={repo.id}
                       repository={repo}
-                      onFeedback={handleFeedback}
+                      onFeedback={(type) => handleFeedback(type, repo.id)}
                     />
                     
                     <Button 

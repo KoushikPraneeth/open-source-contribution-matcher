@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Repository } from '@/types';
+import { Repository, GitHubRepository } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
@@ -60,6 +60,14 @@ const SavedRepositories = ({ savedRepos }: SavedRepositoriesProps) => {
             {savedRepos.map((savedRepo) => {
               const repo = savedRepo.repository;
               if (!repo) return null;
+              
+              // Add default values for missing properties from GitHubRepository type
+              const repoWithDefaults = {
+                ...repo,
+                forks_count: repo.forks || 0,
+                updated_at: repo.lastUpdated || new Date().toISOString(),
+                open_issues_count: 0,
+              };
               
               return (
                 <div 
