@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { 
   Chart as ChartJS, 
@@ -12,19 +11,24 @@ import {
   Title, 
   Tooltip, 
   Legend,
-  Filler,
-  ScriptableContext,
-  ChartData,
-  ChartOptions
-} from 'react-chartjs-2';
+  Filler
+} from 'chart.js';
+import { Chart as ReactChart } from 'react-chartjs-2';
 
 // Register ChartJS components
-import {
-  Chart as ChartJSChart,
-  registerables
-} from 'chart.js';
-
-ChartJSChart.register(...registerables);
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  RadialLinearScale,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 type ChartProps = {
   data: any;
@@ -57,7 +61,7 @@ export function BarChart({ data, height = 400, width, options = {} }: ChartProps
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart type="bar" data={data} options={mergedOptions} />
+      <ReactChart type="bar" data={data} options={mergedOptions} />
     </div>
   );
 }
@@ -86,7 +90,7 @@ export function LineChart({ data, height = 400, width, options = {} }: ChartProp
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart type="line" data={data} options={mergedOptions} />
+      <ReactChart type="line" data={data} options={mergedOptions} />
     </div>
   );
 }
@@ -110,7 +114,7 @@ export function PieChart({ data, height = 400, width, options = {} }: ChartProps
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart type="pie" data={data} options={mergedOptions} />
+      <ReactChart type="pie" data={data} options={mergedOptions} />
     </div>
   );
 }
@@ -134,7 +138,7 @@ export function DoughnutChart({ data, height = 400, width, options = {} }: Chart
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart type="doughnut" data={data} options={mergedOptions} />
+      <ReactChart type="doughnut" data={data} options={mergedOptions} />
     </div>
   );
 }
@@ -163,7 +167,7 @@ export function AreaChart({ data, height = 400, width, options = {} }: ChartProp
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart 
+      <ReactChart 
         type="line" 
         data={{
           ...data,
@@ -203,7 +207,7 @@ export function RadarChart({ data, height = 400, width, options = {} }: ChartPro
 
   return (
     <div style={{ height, width: width || '100%' }}>
-      <ChartJSChart type="radar" data={data} options={mergedOptions} />
+      <ReactChart type="radar" data={data} options={mergedOptions} />
     </div>
   );
 }
