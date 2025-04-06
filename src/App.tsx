@@ -25,6 +25,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import ProtectedRoute from "./components/ProtectedRoute";
 import PageLoading from "./components/PageLoading";
+import OfflineBanner from "./components/OfflineBanner";
 
 // Create a fallback error component
 const ErrorFallback = ({ error, resetErrorBoundary }) => {
@@ -142,6 +143,7 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
+                <OfflineBanner />
               </ErrorBoundaryWrapper>
             </BrowserRouter>
           </TooltipProvider>

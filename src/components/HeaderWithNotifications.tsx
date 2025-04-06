@@ -16,6 +16,7 @@ import { Menu, Settings, LogOut, User, Sun, Moon } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import NotificationsPanel from './NotificationsPanel';
+import ConnectionStatus from './ConnectionStatus';
 
 const HeaderWithNotifications = () => {
   const { isAuthenticated, currentUser, logout } = useAuth();
@@ -62,6 +63,10 @@ const HeaderWithNotifications = () => {
         </div>
         
         <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <ConnectionStatus className="mr-2 hidden md:flex" />
+          )}
+          
           {isAuthenticated ? (
             <>
               <Button 
@@ -94,6 +99,7 @@ const HeaderWithNotifications = () => {
                   <DropdownMenuLabel>
                     {currentUser?.username || 'User'}
                   </DropdownMenuLabel>
+                  {isMobile && <ConnectionStatus className="px-2 py-1" />}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center gap-2 cursor-pointer">

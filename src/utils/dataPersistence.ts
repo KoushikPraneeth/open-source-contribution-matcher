@@ -49,6 +49,13 @@ export function saveData<K extends keyof StorableData>(
     window.dispatchEvent(new CustomEvent('local-data-updated', {
       detail: { key, data }
     }));
+
+    // Queue sync if online, otherwise mark as needing sync
+    if (navigator.onLine) {
+      queueDataForSync(key, data);
+    } else {
+      markPendingSync(key);
+    }
   } catch (error) {
     console.error(`Error saving ${key} to localStorage:`, error);
   }
@@ -108,6 +115,9 @@ export function markSynced(key?: keyof StorableData): void {
         const parsed = JSON.parse(storedItem);
         parsed.lastSynced = timestamp;
         localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(parsed));
+        
+        // Remove from pending sync queue
+        removePendingSync(key);
       } catch (error) {
         console.error(`Error updating sync status for ${key}:`, error);
       }
@@ -115,24 +125,76 @@ export function markSynced(key?: keyof StorableData): void {
   }
 }
 
+// Pending sync tracking
+const PENDING_SYNC_KEY = 'pending-sync-items';
+
+/**
+ * Mark data as pending sync when offline
+ */
+function markPendingSync(key: keyof StorableData): void {
+  try {
+    const pendingSyncs = JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]');
+    if (!pendingSyncs.includes(key)) {
+      pendingSyncs.push(key);
+      localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(pendingSyncs));
+    }
+  } catch (error) {
+    console.error('Error marking pending sync:', error);
+  }
+}
+
+/**
+ * Remove item from pending sync
+ */
+function removePendingSync(key: keyof StorableData): void {
+  try {
+    const pendingSyncs = JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]');
+    const updatedSyncs = pendingSyncs.filter((k: string) => k !== key);
+    localStorage.setItem(PENDING_SYNC_KEY, JSON.stringify(updatedSyncs));
+  } catch (error) {
+    console.error('Error removing pending sync:', error);
+  }
+}
+
+/**
+ * Get items that need to be synced
+ */
+export function getPendingSyncs(): Array<keyof StorableData> {
+  try {
+    return JSON.parse(localStorage.getItem(PENDING_SYNC_KEY) || '[]');
+  } catch (error) {
+    console.error('Error getting pending syncs:', error);
+    return [];
+  }
+}
+
+/**
+ * Queue data for sync with the server when online
+ */
+function queueDataForSync<K extends keyof StorableData>(key: K, data: StorableData[K]): void {
+  // Here you would implement logic to queue for sync
+  // For now we'll just use the browser's built-in sync manager if available
+  if ('serviceWorker' in navigator && 'SyncManager' in window) {
+    navigator.serviceWorker.ready.then(registration => {
+      // @ts-ignore - TypeScript doesn't recognize SyncManager yet
+      registration.sync.register('sync-data');
+    }).catch(error => {
+      console.error('Error registering sync:', error);
+    });
+  } else {
+    // Fall back to immediate sync attempt
+    syncData().catch(error => {
+      console.error('Error syncing data:', error);
+      markPendingSync(key);
+    });
+  }
+}
+
 /**
  * Check if there is unsynced data that needs to be synchronized
  */
 export function hasUnsyncedData(): boolean {
-  const lastSync = localStorage.getItem(STORAGE_KEYS.LAST_SYNC);
-  if (!lastSync) return true;
-  
-  // Check each data type to see if it has been updated since the last sync
-  for (const key of Object.keys(STORAGE_KEYS) as Array<keyof typeof STORAGE_KEYS>) {
-    if (key === 'LAST_SYNC') continue;
-    
-    const updateTime = getLastUpdateTime(key as keyof StorableData);
-    if (updateTime && updateTime > lastSync) {
-      return true;
-    }
-  }
-  
-  return false;
+  return getPendingSyncs().length > 0;
 }
 
 /**
@@ -142,6 +204,7 @@ export function clearAllData(): void {
   Object.values(STORAGE_KEYS).forEach(key => {
     localStorage.removeItem(key);
   });
+  localStorage.removeItem(PENDING_SYNC_KEY);
 }
 
 /**
@@ -153,15 +216,27 @@ export async function syncData(): Promise<boolean> {
   }
   
   try {
+    const pendingSyncs = getPendingSyncs();
+    
+    if (pendingSyncs.length === 0) {
+      return true;
+    }
+    
+    console.log('Syncing data:', pendingSyncs);
+    
     // Here you would implement actual API calls to sync data
-    // This is a placeholder for the actual implementation
-    
     // For example:
-    // const skills = loadData('skills', []);
-    // await api.updateUserSkills(skills);
+    // for (const key of pendingSyncs) {
+    //   const data = loadData(key as keyof StorableData, []);
+    //   await apiService.syncData(key, data);
+    //   markSynced(key as keyof StorableData);
+    // }
     
-    // Pretend we've synced successfully
-    markSynced();
+    // For now, we'll just pretend we've synced successfully
+    pendingSyncs.forEach(key => {
+      markSynced(key as keyof StorableData);
+    });
+    
     return true;
   } catch (error) {
     console.error('Error syncing data:', error);
@@ -190,4 +265,36 @@ export function subscribeToDataChanges(
   return () => {
     window.removeEventListener('local-data-updated', handler);
   };
+}
+
+/**
+ * Listen for online/offline status changes
+ * @param callback Function to call when online status changes
+ */
+export function subscribeToOnlineStatus(
+  callback: (isOnline: boolean) => void
+): () => void {
+  const onlineHandler = () => callback(true);
+  const offlineHandler = () => callback(false);
+  
+  window.addEventListener('online', onlineHandler);
+  window.addEventListener('offline', offlineHandler);
+  
+  // Return unsubscribe function
+  return () => {
+    window.removeEventListener('online', onlineHandler);
+    window.removeEventListener('offline', offlineHandler);
+  };
+}
+
+// Automatically attempt to sync when coming back online
+if (typeof window !== 'undefined') {
+  window.addEventListener('online', () => {
+    console.log('Device is online, attempting to sync data');
+    syncData().then(success => {
+      if (success) {
+        console.log('Data synchronized successfully');
+      }
+    });
+  });
 }
