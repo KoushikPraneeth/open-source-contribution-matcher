@@ -17,13 +17,13 @@ type StorableData = {
 
 // Keys for different data types
 const STORAGE_KEYS: Record<keyof StorableData | 'LAST_SYNC', string> = {
-  SKILLS: 'user-skills',
-  EXPERIENCE_LEVEL: 'user-experience-level',
-  PROJECT_TYPES: 'user-project-types',
-  CONTRIBUTION_GOALS: 'user-contribution-goals',
-  SAVED_REPOSITORIES: 'saved-repositories',
-  USER_PREFERENCES: 'user-preferences',
-  CONTRIBUTION_HISTORY: 'contribution-history',
+  skills: 'user-skills',
+  experienceLevel: 'user-experience-level',
+  projectTypes: 'user-project-types',
+  contributionGoals: 'user-contribution-goals',
+  savedRepositories: 'saved-repositories',
+  userPreferences: 'user-preferences',
+  contributionHistory: 'contribution-history',
   LAST_SYNC: 'last-sync-timestamp',
 };
 
