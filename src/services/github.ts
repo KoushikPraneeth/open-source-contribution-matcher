@@ -1,3 +1,4 @@
 
 // Re-export from the new structure
-export { githubService, GitHubRepository, GitHubIssue } from './github/index';
+export { githubService } from './github/index';
+export type { GitHubRepository, GitHubIssue } from './github/index';

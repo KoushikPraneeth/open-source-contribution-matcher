@@ -3,7 +3,7 @@ import { githubCore } from './githubCore';
 import { getUserProfile, getUserRepositories, getUserContributions } from './profileService';
 import { searchRepositories, getBeginnerFriendlyIssues } from './repositoryService';
 import { getMatchedRepositories } from './matchingService';
-export { GitHubRepository, GitHubIssue } from './types';
+export type { GitHubRepository, GitHubIssue } from './types';
 
 class GitHubService {
   initialize = githubCore.initialize.bind(githubCore);
