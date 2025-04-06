@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -13,6 +13,7 @@ import { ExperienceLevel } from '@/types';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { Input } from '@/components/ui/input';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useTouchGestures } from '@/hooks/use-touch-gestures';
 
 const OnboardingFlow = () => {
   const { currentUser, updateUserProfile } = useAuth();
@@ -33,6 +34,24 @@ const OnboardingFlow = () => {
   const [skillSearchQuery, setSkillSearchQuery] = useState(onboardingState.skillSearchQuery);
   const totalSteps = 3;
   
+  // Reference for touch gestures
+  const flowRef = useRef<HTMLDivElement>(null);
+  
+  // Use touch gestures for swiping between steps
+  useTouchGestures(flowRef, {
+    onSwipeLeft: () => {
+      if (step < totalSteps) {
+        handleNext();
+      }
+    },
+    onSwipeRight: () => {
+      if (step > 1) {
+        handleBack();
+      }
+    },
+    threshold: 70
+  });
+  
   // Update localStorage whenever state changes
   useEffect(() => {
     setOnboardingState({
@@ -43,6 +62,22 @@ const OnboardingFlow = () => {
     });
   }, [step, experience, connectGithub, skillSearchQuery, setOnboardingState]);
   
+  // Load state from localStorage if page is refreshed
+  useEffect(() => {
+    const savedState = localStorage.getItem('onboarding-state');
+    if (savedState) {
+      try {
+        const parsedState = JSON.parse(savedState);
+        setStep(parsedState.step || 1);
+        setExperience(parsedState.experience || ExperienceLevel.Beginner);
+        setConnectGithub(parsedState.connectGithub || false);
+        setSkillSearchQuery(parsedState.skillSearchQuery || '');
+      } catch (e) {
+        console.error('Error parsing saved onboarding state', e);
+      }
+    }
+  }, []);
+  
   const handleNext = () => {
     if (step === 1) {
       // Save experience level
@@ -52,6 +87,9 @@ const OnboardingFlow = () => {
           experienceLevel: experience
         });
       }
+      
+      // Save to localStorage for offline access
+      localStorage.setItem('user-experience-level', experience);
     }
     
     if (step < totalSteps) {
@@ -73,6 +111,9 @@ const OnboardingFlow = () => {
         isGithubConnected: true,
         githubUsername: currentUser.username || 'user'
       });
+      
+      // Save to localStorage
+      localStorage.setItem('github-connected', 'true');
     }
     
     toast({
@@ -100,7 +141,7 @@ const OnboardingFlow = () => {
   };
   
   return (
-    <div className="container max-w-4xl mx-auto p-4">
+    <div className="container max-w-4xl mx-auto p-4" ref={flowRef}>
       <Card className="shadow-lg border-none">
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -246,7 +287,7 @@ const OnboardingFlow = () => {
                     <Button
                       size="lg"
                       variant={connectGithub ? "default" : "outline"}
-                      className="gap-2 w-full md:w-auto"
+                      className="gap-2 w-full md:w-auto touch-manipulation"
                       onClick={() => setConnectGithub(!connectGithub)}
                     >
                       <Github className="h-5 w-5" />
@@ -280,23 +321,29 @@ const OnboardingFlow = () => {
         </CardContent>
         
         <CardFooter className="flex justify-between p-6 pt-2">
-          <Button
-            variant="outline"
-            onClick={handleBack}
-            disabled={step === 1}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Button>
+          <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <Button
+              variant="outline"
+              onClick={handleBack}
+              disabled={step === 1}
+              className="gap-2 touch-manipulation"
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </Button>
+          </motion.div>
           
           {step < totalSteps ? (
-            <Button onClick={handleNext} className="gap-2">
-              Next <ArrowRight className="h-4 w-4" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button onClick={handleNext} className="gap-2 touch-manipulation">
+                Next <ArrowRight className="h-4 w-4" />
+              </Button>
+            </motion.div>
           ) : (
-            <Button onClick={handleComplete} className="gap-2">
-              Complete <Check className="h-4 w-4" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button onClick={handleComplete} className="gap-2 touch-manipulation">
+                Complete <Check className="h-4 w-4" />
+              </Button>
+            </motion.div>
           )}
         </CardFooter>
       </Card>

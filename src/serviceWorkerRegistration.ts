@@ -15,10 +15,11 @@ type Config = {
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
   onOffline?: () => void;
   onOnline?: () => void;
+  onMessage?: (event: MessageEvent) => void;
 };
 
 export function register(config?: Config) {
-  if (process.env.NODE_ENV === 'production' && 'serviceWorker' in navigator) {
+  if ((process.env.NODE_ENV === 'production' || true) && 'serviceWorker' in navigator) {
     // The URL constructor is available in all browsers that support SW.
     const publicUrl = new URL(process.env.PUBLIC_URL || '', window.location.href);
     if (publicUrl.origin !== window.location.origin) {
@@ -41,6 +42,11 @@ export function register(config?: Config) {
       
       // Set up online/offline listeners
       setupConnectivityListeners(config);
+      
+      // Set up service worker message listener
+      if (config && config.onMessage && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.addEventListener('message', config.onMessage);
+      }
     });
   }
 }
@@ -51,8 +57,24 @@ function registerValidSW(swUrl: string, config?: Config) {
     .then((registration) => {
       // Listen for messages from the service worker
       navigator.serviceWorker.addEventListener('message', (event) => {
+        console.log('Message from service worker:', event.data);
+        
         if (event.data && event.data.type === 'SYNC_COMPLETE') {
-          console.log('Data sync completed at', event.data.timestamp);
+          console.log(`Data sync completed for ${event.data.feature} at ${event.data.timestamp}`);
+          
+          // Trigger refresh for specific content types after sync
+          if (event.data.feature === 'user-data') {
+            window.dispatchEvent(new CustomEvent('user-data-synced'));
+          }
+          
+          if (event.data.feature === 'contributions') {
+            window.dispatchEvent(new CustomEvent('contributions-synced'));
+          }
+        }
+        
+        // Call the onMessage handler if provided
+        if (config && config.onMessage) {
+          config.onMessage(event);
         }
       });
       
@@ -135,11 +157,36 @@ function setupConnectivityListeners(config?: Config) {
       config.onOnline();
     }
     
-    // Trigger a sync event when going back online
+    // Trigger sync events when going back online
     if ('serviceWorker' in navigator && 'SyncManager' in window) {
       navigator.serviceWorker.ready.then((registration) => {
         // @ts-ignore - TypeScript doesn't recognize SyncManager yet
         registration.sync.register('sync-user-data');
+        // @ts-ignore
+        registration.sync.register('sync-contributions');
+      });
+    }
+    
+    // Consider registering periodic sync if supported
+    if ('serviceWorker' in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype) {
+      navigator.serviceWorker.ready.then(async (registration) => {
+        try {
+          // @ts-ignore - TypeScript doesn't recognize periodicSync yet
+          const status = await navigator.permissions.query({
+            name: 'periodic-background-sync',
+          });
+          
+          if (status.state === 'granted') {
+            // @ts-ignore
+            await registration.periodicSync.register('update-content', {
+              // Update every 12 hours
+              minInterval: 12 * 60 * 60 * 1000,
+            });
+            console.log('Periodic background sync registered');
+          }
+        } catch (error) {
+          console.log('Periodic background sync not supported', error);
+        }
       });
     }
   });
@@ -163,4 +210,21 @@ export function unregister() {
         console.error(error.message);
       });
   }
+}
+
+// Helper function to check if we're currently offline
+export function isOffline(): boolean {
+  return typeof navigator !== 'undefined' ? !navigator.onLine : false;
+}
+
+// Helper function to trigger a manual sync
+export function triggerSync(syncType: 'user-data' | 'contributions'): Promise<void> {
+  if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
+    return Promise.reject(new Error('Background sync not supported'));
+  }
+  
+  return navigator.serviceWorker.ready.then((registration) => {
+    // @ts-ignore - TypeScript doesn't recognize SyncManager yet
+    return registration.sync.register(`sync-${syncType}`);
+  });
 }

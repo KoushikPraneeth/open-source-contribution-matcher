@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -9,6 +10,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { ExperienceLevel, Skill, SkillLevel, SkillCategory } from '@/types';
+import { motion } from 'framer-motion';
 
 // Common skills by category
 const commonSkills = {
@@ -42,7 +44,11 @@ const contributionGoals = [
   'Building portfolio', 'Giving back to the community'
 ];
 
-export default function UserPreferences() {
+interface UserPreferencesProps {
+  searchQuery?: string; // Make searchQuery optional
+}
+
+export default function UserPreferences({ searchQuery = '' }: UserPreferencesProps) {
   const { currentUser, updateUserProfile } = useAuth();
   const { toast } = useToast();
   
@@ -59,6 +65,21 @@ export default function UserPreferences() {
   const [newSkill, setNewSkill] = useState('');
   const [newSkillCategory, setNewSkillCategory] = useState<SkillCategory>(SkillCategory.Language);
   const [newSkillLevel, setNewSkillLevel] = useState<SkillLevel>(SkillLevel.Beginner);
+  
+  // Filter skills based on search query
+  const filteredSkills = Object.entries(commonSkills).reduce((acc, [category, skillList]) => {
+    if (searchQuery) {
+      const filtered = skillList.filter(skill => 
+        skill.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      if (filtered.length > 0) {
+        acc[category] = filtered;
+      }
+    } else {
+      acc[category] = skillList;
+    }
+    return acc;
+  }, {} as Record<string, string[]>);
   
   const handleAddSkill = () => {
     if (!newSkill.trim()) return;
@@ -84,12 +105,18 @@ export default function UserPreferences() {
     
     setSkills(updatedSkills);
     setNewSkill('');
+    
+    // Save to localStorage for persistence
+    localStorage.setItem('user-skills', JSON.stringify(updatedSkills));
   };
   
   const handleRemoveSkill = (index: number) => {
     const updatedSkills = [...skills];
     updatedSkills.splice(index, 1);
     setSkills(updatedSkills);
+    
+    // Update localStorage
+    localStorage.setItem('user-skills', JSON.stringify(updatedSkills));
   };
   
   const handleCommonSkillToggle = (skillName: string, category: SkillCategory) => {
@@ -98,37 +125,47 @@ export default function UserPreferences() {
       skill.name === skillName && skill.category === category
     );
     
+    let updatedSkills: Skill[];
+    
     if (existingSkillIndex >= 0) {
       // Remove skill
-      handleRemoveSkill(existingSkillIndex);
+      updatedSkills = [...skills];
+      updatedSkills.splice(existingSkillIndex, 1);
     } else {
       // Add skill with default level
-      setSkills([...skills, {
+      updatedSkills = [...skills, {
         name: skillName,
         category,
         level: SkillLevel.Beginner
-      }]);
+      }];
     }
+    
+    setSkills(updatedSkills);
+    
+    // Update localStorage
+    localStorage.setItem('user-skills', JSON.stringify(updatedSkills));
   };
   
   const handleProjectTypeToggle = (type: string) => {
-    setSelectedProjectTypes(prev => {
-      if (prev.includes(type)) {
-        return prev.filter(t => t !== type);
-      } else {
-        return [...prev, type];
-      }
-    });
+    const updatedTypes = selectedProjectTypes.includes(type)
+      ? selectedProjectTypes.filter(t => t !== type)
+      : [...selectedProjectTypes, type];
+    
+    setSelectedProjectTypes(updatedTypes);
+    
+    // Update localStorage
+    localStorage.setItem('user-project-types', JSON.stringify(updatedTypes));
   };
   
   const handleGoalToggle = (goal: string) => {
-    setSelectedGoals(prev => {
-      if (prev.includes(goal)) {
-        return prev.filter(g => g !== goal);
-      } else {
-        return [...prev, goal];
-      }
-    });
+    const updatedGoals = selectedGoals.includes(goal)
+      ? selectedGoals.filter(g => g !== goal)
+      : [...selectedGoals, goal];
+    
+    setSelectedGoals(updatedGoals);
+    
+    // Update localStorage
+    localStorage.setItem('user-contribution-goals', JSON.stringify(updatedGoals));
   };
   
   const handleSavePreferences = async () => {
@@ -149,19 +186,64 @@ export default function UserPreferences() {
         contributionGoals: selectedGoals
       });
       
+      // Persist to localStorage for offline access
+      localStorage.setItem('user-skills', JSON.stringify(skills));
+      localStorage.setItem('user-experience-level', experienceLevel);
+      localStorage.setItem('user-project-types', JSON.stringify(selectedProjectTypes));
+      localStorage.setItem('user-contribution-goals', JSON.stringify(selectedGoals));
+      
       toast({
         title: "Preferences saved",
         description: "Your profile preferences have been updated"
       });
     } catch (error) {
       console.error("Failed to save preferences:", error);
+      
+      // Still save to localStorage even if API fails
+      localStorage.setItem('user-skills', JSON.stringify(skills));
+      localStorage.setItem('user-experience-level', experienceLevel);
+      localStorage.setItem('user-project-types', JSON.stringify(selectedProjectTypes));
+      localStorage.setItem('user-contribution-goals', JSON.stringify(selectedGoals));
+      
       toast({
-        title: "Error",
-        description: "Failed to save preferences. Please try again.",
-        variant: "destructive"
+        title: "Saved locally",
+        description: "Your preferences are saved locally. They will sync when you're back online.",
+        variant: "default"
       });
     }
   };
+  
+  // Load data from localStorage on component mount
+  React.useEffect(() => {
+    // Only load from localStorage if we don't have data from the server
+    if (!currentUser?.skills?.length) {
+      const savedSkills = localStorage.getItem('user-skills');
+      if (savedSkills) {
+        setSkills(JSON.parse(savedSkills));
+      }
+    }
+    
+    if (!currentUser?.experienceLevel) {
+      const savedLevel = localStorage.getItem('user-experience-level');
+      if (savedLevel) {
+        setExperienceLevel(savedLevel as ExperienceLevel);
+      }
+    }
+    
+    if (!currentUser?.projectTypes?.length) {
+      const savedTypes = localStorage.getItem('user-project-types');
+      if (savedTypes) {
+        setSelectedProjectTypes(JSON.parse(savedTypes));
+      }
+    }
+    
+    if (!currentUser?.contributionGoals?.length) {
+      const savedGoals = localStorage.getItem('user-contribution-goals');
+      if (savedGoals) {
+        setSelectedGoals(JSON.parse(savedGoals));
+      }
+    }
+  }, [currentUser]);
   
   return (
     <Card className="bg-card border-none shadow-sm">
@@ -176,7 +258,10 @@ export default function UserPreferences() {
           <h3 className="text-lg font-medium">Experience Level</h3>
           <RadioGroup 
             value={experienceLevel} 
-            onValueChange={(value) => setExperienceLevel(value as ExperienceLevel)}
+            onValueChange={(value) => {
+              setExperienceLevel(value as ExperienceLevel);
+              localStorage.setItem('user-experience-level', value);
+            }}
             className="flex flex-col space-y-2"
           >
             <div className="flex items-center space-x-2">
@@ -198,7 +283,7 @@ export default function UserPreferences() {
           <h3 className="text-lg font-medium">Your Skills</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {Object.entries(commonSkills).map(([category, skillList]) => (
+            {Object.entries(filteredSkills).map(([category, skillList]) => (
               <div key={category} className="space-y-2">
                 <h4 className="text-sm font-medium">{category}</h4>
                 <div className="flex flex-wrap gap-2">
@@ -208,16 +293,21 @@ export default function UserPreferences() {
                     );
                     
                     return (
-                      <Button
+                      <motion.div
                         key={skill}
-                        type="button"
-                        variant={isSelected ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => handleCommonSkillToggle(skill, category as SkillCategory)}
-                        className="h-7"
+                        whileTap={{ scale: 0.95 }}
+                        whileHover={{ scale: 1.05 }}
                       >
-                        {skill}
-                      </Button>
+                        <Button
+                          type="button"
+                          variant={isSelected ? "default" : "outline"}
+                          size="sm"
+                          onClick={() => handleCommonSkillToggle(skill, category as SkillCategory)}
+                          className="h-8 min-w-[80px] touch-manipulation"
+                        >
+                          {skill}
+                        </Button>
+                      </motion.div>
                     );
                   })}
                 </div>
@@ -231,13 +321,14 @@ export default function UserPreferences() {
                 placeholder="Add custom skill" 
                 value={newSkill}
                 onChange={(e) => setNewSkill(e.target.value)}
+                className="h-10"
               />
             </div>
             <Select
               value={newSkillCategory}
               onValueChange={(value) => setNewSkillCategory(value as SkillCategory)}
             >
-              <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px] h-10">
                 <SelectValue placeholder="Category" />
               </SelectTrigger>
               <SelectContent>
@@ -252,7 +343,7 @@ export default function UserPreferences() {
               value={newSkillLevel}
               onValueChange={(value) => setNewSkillLevel(value as SkillLevel)}
             >
-              <SelectTrigger className="w-full sm:w-[150px]">
+              <SelectTrigger className="w-full sm:w-[150px] h-10">
                 <SelectValue placeholder="Level" />
               </SelectTrigger>
               <SelectContent>
@@ -263,15 +354,28 @@ export default function UserPreferences() {
                 ))}
               </SelectContent>
             </Select>
-            <Button type="button" onClick={handleAddSkill}>Add</Button>
+            <Button type="button" onClick={handleAddSkill} className="h-10">Add</Button>
           </div>
           
           {skills.length > 0 && (
-            <div className="mt-4">
+            <motion.div 
+              className="mt-4"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+            >
               <h4 className="text-sm font-medium mb-2">Your selected skills:</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
                 {skills.map((skill, index) => (
-                  <div key={index} className="flex items-center justify-between bg-muted p-2 rounded-md">
+                  <motion.div 
+                    key={index} 
+                    className="flex items-center justify-between bg-muted p-2 rounded-md"
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.9 }}
+                    transition={{ duration: 0.2 }}
+                    whileHover={{ backgroundColor: "rgba(0,0,0,0.05)" }}
+                  >
                     <div>
                       <span className="font-medium">{skill.name}</span>
                       <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -284,13 +388,14 @@ export default function UserPreferences() {
                       variant="ghost" 
                       size="sm" 
                       onClick={() => handleRemoveSkill(index)}
+                      className="h-8 w-8 p-0"
                     >
                       ✕
                     </Button>
-                  </div>
+                  </motion.div>
                 ))}
               </div>
-            </div>
+            </motion.div>
           )}
         </div>
         
@@ -302,19 +407,25 @@ export default function UserPreferences() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
             {projectTypes.map(type => (
-              <div key={type} className="flex items-center space-x-2">
+              <motion.div 
+                key={type} 
+                className="flex items-center space-x-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Checkbox 
                   id={`project-type-${type}`} 
                   checked={selectedProjectTypes.includes(type)}
                   onCheckedChange={() => handleProjectTypeToggle(type)}
+                  className="h-5 w-5"
                 />
                 <label
                   htmlFor={`project-type-${type}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
                   {type}
                 </label>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -327,28 +438,38 @@ export default function UserPreferences() {
           
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             {contributionGoals.map(goal => (
-              <div key={goal} className="flex items-center space-x-2">
+              <motion.div 
+                key={goal} 
+                className="flex items-center space-x-2"
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
                 <Checkbox 
                   id={`goal-${goal}`} 
                   checked={selectedGoals.includes(goal)}
                   onCheckedChange={() => handleGoalToggle(goal)}
+                  className="h-5 w-5"
                 />
                 <label
                   htmlFor={`goal-${goal}`}
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
                 >
                   {goal}
                 </label>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
         
-        <div className="flex justify-end">
-          <Button onClick={handleSavePreferences}>
+        <motion.div 
+          className="flex justify-end"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Button onClick={handleSavePreferences} className="px-6">
             Save Preferences
           </Button>
-        </div>
+        </motion.div>
       </CardContent>
     </Card>
   );
