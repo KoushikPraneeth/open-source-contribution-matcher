@@ -12,14 +12,14 @@ import {
   DropdownMenuTrigger 
 } from '@/components/ui/dropdown-menu';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { Menu, Settings, LogOut, User, Sun, Moon } from 'lucide-react';
+import { Menu, Settings, LogOut, User, Sun, Moon, Github } from 'lucide-react';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { useTheme } from '@/contexts/ThemeContext';
 import NotificationsPanel from './NotificationsPanel';
 import ConnectionStatus from './ConnectionStatus';
 
 const HeaderWithNotifications = () => {
-  const { isAuthenticated, currentUser, logout } = useAuth();
+  const { isAuthenticated, currentUser, logout, loginWithGithub } = useAuth();
   const isMobile = useIsMobile();
   const { theme, setTheme } = useTheme();
   
@@ -30,6 +30,15 @@ const HeaderWithNotifications = () => {
   
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+  const handleConnectGithub = async () => {
+    try {
+      await loginWithGithub();
+      // The page will redirect to GitHub OAuth flow
+    } catch (error) {
+      // Error handled in loginWithGithub
+    }
   };
   
   return (
@@ -69,6 +78,18 @@ const HeaderWithNotifications = () => {
           
           {isAuthenticated ? (
             <>
+              {currentUser && !currentUser.isGithubConnected && (
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-2" 
+                  onClick={handleConnectGithub}
+                >
+                  <Github className="h-4 w-4" />
+                  Connect GitHub
+                </Button>
+              )}
+            
               <Button 
                 variant="ghost" 
                 size="icon" 
