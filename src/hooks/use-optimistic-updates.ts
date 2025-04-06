@@ -1,196 +1,136 @@
 
 import { useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-
-type OptimisticUpdateOptions<T> = {
-  // The value to show immediately in the UI
-  optimisticValue: T;
-  // Whether to revert to previous value on error (defaults to true)
-  rollbackOnError?: boolean;
-  // Success message to show (optional)
-  successMessage?: string;
-  // Error message to show (optional)
-  errorMessage?: string;
-};
 
 /**
- * Hook for handling optimistic UI updates with toast notifications
- * @param initialState The initial state value
+ * Custom hook to handle optimistic updates for improved user experience
+ * 
+ * This hook provides a way to update UI immediately before waiting for API responses.
+ * It manages loading states, errors, and rollbacks if the remote operation fails.
  */
-export function useOptimisticUpdates<T>(initialState: T) {
-  const [state, setState] = useState<T>(initialState);
-  const [previousState, setPreviousState] = useState<T | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+export function useOptimisticUpdate<T>() {
+  const [data, setData] = useState<T | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const { toast } = useToast();
 
   /**
-   * Updates the state optimistically before the async action completes
-   * @param asyncAction The async action to perform
-   * @param options Options for the optimistic update
+   * Perform an optimistic update
+   * @param currentData Current data state
+   * @param optimisticUpdate Function to update data optimistically
+   * @param remoteOperation Remote operation to perform (API call)
+   * @param rollbackOnError Whether to roll back to original data on error (default: true)
    */
-  const optimisticUpdate = useCallback(
-    async (
-      asyncAction: () => Promise<T>,
-      { 
-        optimisticValue, 
-        rollbackOnError = true,
-        successMessage,
-        errorMessage
-      }: OptimisticUpdateOptions<T>
-    ) => {
-      // Save the previous state for potential rollback
-      setPreviousState(state);
+  const performOptimisticUpdate = useCallback(async (
+    currentData: T,
+    optimisticUpdate: (current: T) => T,
+    remoteOperation: () => Promise<T>,
+    rollbackOnError: boolean = true
+  ) => {
+    // Store original data for potential rollback
+    const originalData = currentData;
+    
+    // Apply optimistic update immediately
+    const optimisticData = optimisticUpdate(currentData);
+    setData(optimisticData);
+    
+    // Start loading state
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Perform the actual remote operation
+      const result = await remoteOperation();
       
-      // Update the state optimistically
-      setState(optimisticValue);
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        // Perform the actual async action
-        const result = await asyncAction();
-        
-        // Update with the real result
-        setState(result);
-        
-        // Show success toast if message provided
-        if (successMessage) {
-          toast({
-            title: "Success",
-            description: successMessage,
-            variant: "default"
-          });
-        }
-        
-        return result;
-      } catch (err) {
-        // Handle errors
-        const error = err instanceof Error ? err : new Error(String(err));
-        setError(error);
-        
-        // Show error toast
-        toast({
-          title: "Error",
-          description: errorMessage || error.message,
-          variant: "destructive"
-        });
-        
-        // Rollback if specified
-        if (rollbackOnError && previousState !== null) {
-          setState(previousState);
-        }
-        
-        throw error;
-      } finally {
-        setIsLoading(false);
+      // Update with actual result from server
+      setData(result);
+      setIsLoading(false);
+      
+      return result;
+    } catch (err) {
+      // Handle error - roll back if specified
+      setError(err instanceof Error ? err : new Error('Unknown error occurred'));
+      
+      if (rollbackOnError) {
+        setData(originalData);
       }
-    },
-    [state, previousState, toast]
-  );
-  
+      
+      setIsLoading(false);
+      throw err;
+    }
+  }, []);
+
   /**
-   * Updates multiple items in a collection optimistically
-   * @param collection The collection to update
-   * @param itemId The ID of the item to update
-   * @param updatedData The updated data for the item
-   * @param asyncAction The async action to perform
-   * @param options Additional options for the optimistic update
+   * Add an item optimistically
+   * @param currentItems Current array of items
+   * @param newItem Item to add
+   * @param addOperation Remote operation to add the item
    */
-  const optimisticCollectionUpdate = useCallback(
-    async <U extends { id: string | number }>(
-      collection: U[],
-      itemId: string | number,
-      updatedData: Partial<U>,
-      asyncAction: () => Promise<U[]>,
-      options: Omit<OptimisticUpdateOptions<U[]>, 'optimisticValue'> = {}
-    ) => {
-      // Create optimistic collection by updating the specific item
-      const optimisticCollection = collection.map(item => 
-        item.id === itemId ? { ...item, ...updatedData } : item
-      );
-      
-      return optimisticUpdate(
-        asyncAction,
-        {
-          optimisticValue: optimisticCollection,
-          ...options
-        }
-      );
-    },
-    [optimisticUpdate]
-  );
-  
+  const addOptimistically = useCallback(<U>(
+    currentItems: U[],
+    newItem: U,
+    addOperation: () => Promise<U[]>
+  ) => {
+    return performOptimisticUpdate(
+      currentItems as unknown as T,
+      (current) => [...(current as unknown as U[]), newItem] as unknown as T,
+      addOperation as unknown as () => Promise<T>,
+      true
+    );
+  }, [performOptimisticUpdate]);
+
   /**
-   * Adds an item to a collection optimistically
-   * @param collection The collection to update
-   * @param newItem The new item to add
-   * @param asyncAction The async action to perform
-   * @param options Additional options for the optimistic update
+   * Update an item optimistically
+   * @param currentItems Current array of items
+   * @param updatedItem Item with updates
+   * @param itemId Function to determine the item to update
+   * @param updateOperation Remote operation to update the item
    */
-  const optimisticCollectionAdd = useCallback(
-    async <U extends { id?: string | number }>(
-      collection: U[],
-      newItem: U,
-      asyncAction: () => Promise<U[]>,
-      options: Omit<OptimisticUpdateOptions<U[]>, 'optimisticValue'> = {}
-    ) => {
-      // Create a temporary ID for the new item if it doesn't have one
-      const tempItem = { 
-        ...newItem, 
-        id: newItem.id || `temp-${Date.now()}`
-      };
-      
-      // Add the new item to the collection
-      const optimisticCollection = [...collection, tempItem];
-      
-      return optimisticUpdate(
-        asyncAction,
-        {
-          optimisticValue: optimisticCollection,
-          ...options
-        }
-      );
-    },
-    [optimisticUpdate]
-  );
-  
+  const updateOptimistically = useCallback(<U>(
+    currentItems: U[],
+    updatedItem: U,
+    itemId: (item: U) => boolean,
+    updateOperation: () => Promise<U[]>
+  ) => {
+    return performOptimisticUpdate(
+      currentItems as unknown as T,
+      (current) => {
+        const items = current as unknown as U[];
+        return items.map(item => itemId(item) ? updatedItem : item) as unknown as T;
+      },
+      updateOperation as unknown as () => Promise<T>,
+      true
+    );
+  }, [performOptimisticUpdate]);
+
   /**
-   * Removes an item from a collection optimistically
-   * @param collection The collection to update
-   * @param itemId The ID of the item to remove
-   * @param asyncAction The async action to perform
-   * @param options Additional options for the optimistic update
+   * Remove an item optimistically
+   * @param currentItems Current array of items
+   * @param itemId Function to determine the item to remove
+   * @param removeOperation Remote operation to remove the item
    */
-  const optimisticCollectionRemove = useCallback(
-    async <U extends { id: string | number }>(
-      collection: U[],
-      itemId: string | number,
-      asyncAction: () => Promise<U[]>,
-      options: Omit<OptimisticUpdateOptions<U[]>, 'optimisticValue'> = {}
-    ) => {
-      // Remove the item from the collection
-      const optimisticCollection = collection.filter(item => item.id !== itemId);
-      
-      return optimisticUpdate(
-        asyncAction,
-        {
-          optimisticValue: optimisticCollection,
-          ...options
-        }
-      );
-    },
-    [optimisticUpdate]
-  );
+  const removeOptimistically = useCallback(<U>(
+    currentItems: U[],
+    itemId: (item: U) => boolean,
+    removeOperation: () => Promise<U[]>
+  ) => {
+    return performOptimisticUpdate(
+      currentItems as unknown as T,
+      (current) => {
+        const items = current as unknown as U[];
+        return items.filter(item => !itemId(item)) as unknown as T;
+      },
+      removeOperation as unknown as () => Promise<T>,
+      true
+    );
+  }, [performOptimisticUpdate]);
 
   return {
-    state,
-    setState,
+    data,
     isLoading,
     error,
-    optimisticUpdate,
-    optimisticCollectionUpdate,
-    optimisticCollectionAdd,
-    optimisticCollectionRemove
+    performOptimisticUpdate,
+    addOptimistically,
+    updateOptimistically,
+    removeOptimistically,
+    setData
   };
 }

@@ -16,7 +16,7 @@ type StorableData = {
 };
 
 // Keys for different data types
-const STORAGE_KEYS = {
+const STORAGE_KEYS: Record<keyof StorableData | 'LAST_SYNC', string> = {
   SKILLS: 'user-skills',
   EXPERIENCE_LEVEL: 'user-experience-level',
   PROJECT_TYPES: 'user-project-types',
@@ -41,7 +41,9 @@ export function saveData<K extends keyof StorableData>(
       data,
       timestamp: new Date().toISOString(),
     };
-    localStorage.setItem(STORAGE_KEYS[key], JSON.stringify(item));
+    
+    const storageKey = STORAGE_KEYS[key];
+    localStorage.setItem(storageKey, JSON.stringify(item));
     
     // Dispatch an event so other components can update
     window.dispatchEvent(new CustomEvent('local-data-updated', {
@@ -62,7 +64,8 @@ export function loadData<K extends keyof StorableData>(
   defaultValue: StorableData[K]
 ): StorableData[K] {
   try {
-    const storedItem = localStorage.getItem(STORAGE_KEYS[key]);
+    const storageKey = STORAGE_KEYS[key];
+    const storedItem = localStorage.getItem(storageKey);
     if (!storedItem) return defaultValue;
     
     const { data } = JSON.parse(storedItem);
