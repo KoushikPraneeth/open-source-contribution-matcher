@@ -1,26 +1,24 @@
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
-const isLocalhost = Boolean(
-  window.location.hostname === 'localhost' ||
-    // [::1] is the IPv6 localhost address.
-    window.location.hostname === '[::1]' ||
-    // 127.0.0.0/8 are considered localhost for IPv4.
-    window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
-);
+// This lets the app load faster on subsequent visits in production, and gives
+// it offline capabilities. However, it also means that developers (and users)
+// will only see deployed updates on subsequent visits to a page, after all the
+// existing tabs open on the page have been closed, since previously cached
+// resources are updated in the background.
 
 type Config = {
   onSuccess?: (registration: ServiceWorkerRegistration) => void;
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
-  onOffline?: () => void;
-  onOnline?: () => void;
-  onMessage?: (event: MessageEvent) => void;
 };
 
-export function register(config?: Config) {
-  if (('serviceWorker' in navigator)) {
+export function register(config?: Config): void {
+  const isProduction = import.meta.env.PROD;
+  
+  if (isProduction && 'serviceWorker' in navigator) {
     // The URL constructor is available in all browsers that support SW.
-    const publicUrl = new URL(import.meta.env.BASE_URL || '', window.location.href);
+    const publicUrl = new URL(import.meta.env.BASE_URL, window.location.href);
+    
     if (publicUrl.origin !== window.location.origin) {
       // Our service worker won't work if PUBLIC_URL is on a different origin
       // from what our page is served on. This might happen if a CDN is used to
@@ -29,54 +27,42 @@ export function register(config?: Config) {
     }
 
     window.addEventListener('load', () => {
-      const swUrl = `/service-worker.js`;
+      const swUrl = `${import.meta.env.BASE_URL}service-worker.js`;
 
-      if (isLocalhost) {
+      if (isLocalhost()) {
         // This is running on localhost. Let's check if a service worker still exists or not.
         checkValidServiceWorker(swUrl, config);
+
+        // Add some additional logging to localhost, pointing developers to the
+        // service worker/PWA documentation.
+        navigator.serviceWorker.ready.then(() => {
+          console.log(
+            'This web app is being served cache-first by a service ' +
+              'worker. To learn more, visit https://cra.link/PWA'
+          );
+        });
       } else {
         // Is not localhost. Just register service worker
         registerValidSW(swUrl, config);
-      }
-      
-      // Set up online/offline listeners
-      setupConnectivityListeners(config);
-      
-      // Set up service worker message listener
-      if (config && config.onMessage && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.addEventListener('message', config.onMessage);
       }
     });
   }
 }
 
-function registerValidSW(swUrl: string, config?: Config) {
+function isLocalhost(): boolean {
+  return Boolean(
+    window.location.hostname === 'localhost' ||
+      // [::1] is the IPv6 localhost address.
+      window.location.hostname === '[::1]' ||
+      // 127.0.0.0/8 are considered localhost for IPv4.
+      window.location.hostname.match(/^127(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/)
+  );
+}
+
+function registerValidSW(swUrl: string, config?: Config): void {
   navigator.serviceWorker
     .register(swUrl)
     .then((registration) => {
-      // Listen for messages from the service worker
-      navigator.serviceWorker.addEventListener('message', (event) => {
-        console.log('Message from service worker:', event.data);
-        
-        if (event.data && event.data.type === 'SYNC_COMPLETE') {
-          console.log(`Data sync completed for ${event.data.feature} at ${event.data.timestamp}`);
-          
-          // Trigger refresh for specific content types after sync
-          if (event.data.feature === 'user-data') {
-            window.dispatchEvent(new CustomEvent('user-data-synced'));
-          }
-          
-          if (event.data.feature === 'contributions') {
-            window.dispatchEvent(new CustomEvent('contributions-synced'));
-          }
-        }
-        
-        // Call the onMessage handler if provided
-        if (config && config.onMessage) {
-          config.onMessage(event);
-        }
-      });
-      
       registration.onupdatefound = () => {
         const installingWorker = registration.installing;
         if (installingWorker == null) {
@@ -90,7 +76,7 @@ function registerValidSW(swUrl: string, config?: Config) {
               // content until all client tabs are closed.
               console.log(
                 'New content is available and will be used when all ' +
-                  'tabs for this page are closed.'
+                  'tabs for this page are closed. See https://cra.link/PWA.'
               );
 
               // Execute callback
@@ -117,7 +103,7 @@ function registerValidSW(swUrl: string, config?: Config) {
     });
 }
 
-function checkValidServiceWorker(swUrl: string, config?: Config) {
+function checkValidServiceWorker(swUrl: string, config?: Config): void {
   // Check if the service worker can be found. If it can't reload the page.
   fetch(swUrl, {
     headers: { 'Service-Worker': 'script' },
@@ -142,65 +128,10 @@ function checkValidServiceWorker(swUrl: string, config?: Config) {
     })
     .catch(() => {
       console.log('No internet connection found. App is running in offline mode.');
-      if (config && config.onOffline) {
-        config.onOffline();
-      }
     });
 }
 
-function setupConnectivityListeners(config?: Config) {
-  // Handle online event
-  window.addEventListener('online', () => {
-    console.log('Application is online. Syncing data...');
-    if (config && config.onOnline) {
-      config.onOnline();
-    }
-    
-    // Trigger sync events when going back online
-    if ('serviceWorker' in navigator && 'SyncManager' in window) {
-      navigator.serviceWorker.ready.then((registration) => {
-        // @ts-ignore - TypeScript doesn't recognize SyncManager yet
-        registration.sync.register('sync-user-data');
-        // @ts-ignore
-        registration.sync.register('sync-contributions');
-      });
-    }
-    
-    // Consider registering periodic sync if supported
-    if ('serviceWorker' in navigator && 'periodicSync' in ServiceWorkerRegistration.prototype) {
-      navigator.serviceWorker.ready.then(async (registration) => {
-        try {
-          // @ts-ignore - TypeScript doesn't recognize periodicSync yet
-          const status = await navigator.permissions.query({
-            // @ts-ignore - TypeScript doesn't know this permission name yet
-            name: 'periodic-background-sync',
-          });
-          
-          if (status.state === 'granted') {
-            // @ts-ignore
-            await registration.periodicSync.register('update-content', {
-              // Update every 12 hours
-              minInterval: 12 * 60 * 60 * 1000,
-            });
-            console.log('Periodic background sync registered');
-          }
-        } catch (error) {
-          console.log('Periodic background sync not supported', error);
-        }
-      });
-    }
-  });
-  
-  // Handle offline event
-  window.addEventListener('offline', () => {
-    console.log('Application is offline. Some features may be limited.');
-    if (config && config.onOffline) {
-      config.onOffline();
-    }
-  });
-}
-
-export function unregister() {
+export function unregister(): void {
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.ready
       .then((registration) => {
@@ -210,21 +141,4 @@ export function unregister() {
         console.error(error.message);
       });
   }
-}
-
-// Helper function to check if we're currently offline
-export function isOffline(): boolean {
-  return typeof navigator !== 'undefined' ? !navigator.onLine : false;
-}
-
-// Helper function to trigger a manual sync
-export function triggerSync(syncType: 'user-data' | 'contributions'): Promise<void> {
-  if (!('serviceWorker' in navigator) || !('SyncManager' in window)) {
-    return Promise.reject(new Error('Background sync not supported'));
-  }
-  
-  return navigator.serviceWorker.ready.then((registration) => {
-    // @ts-ignore - TypeScript doesn't recognize SyncManager yet
-    return registration.sync.register(`sync-${syncType}`);
-  });
 }
