@@ -1,3 +1,4 @@
+
 // This optional code is used to register a service worker.
 // register() is not called by default.
 
@@ -10,6 +11,9 @@
 type Config = {
   onSuccess?: (registration: ServiceWorkerRegistration) => void;
   onUpdate?: (registration: ServiceWorkerRegistration) => void;
+  onOffline?: () => void;
+  onOnline?: () => void;
+  onMessage?: (event: MessageEvent) => void;
 };
 
 export function register(config?: Config): void {
@@ -28,6 +32,24 @@ export function register(config?: Config): void {
 
     window.addEventListener('load', () => {
       const swUrl = `${import.meta.env.BASE_URL}service-worker.js`;
+
+      // Set up online/offline listeners if config provides handlers
+      if (config?.onOffline || config?.onOnline) {
+        window.addEventListener('offline', () => {
+          if (config?.onOffline) config.onOffline();
+        });
+
+        window.addEventListener('online', () => {
+          if (config?.onOnline) config.onOnline();
+        });
+      }
+
+      // Set up message listener if config provides handler
+      if (config?.onMessage) {
+        navigator.serviceWorker.addEventListener('message', (event) => {
+          if (config.onMessage) config.onMessage(event);
+        });
+      }
 
       if (isLocalhost()) {
         // This is running on localhost. Let's check if a service worker still exists or not.
