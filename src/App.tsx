@@ -1,4 +1,3 @@
-
 import { Suspense, lazy } from "react";
 import { ErrorBoundary } from "react-error-boundary";
 import { Toaster } from "@/components/ui/toaster";
@@ -71,7 +70,8 @@ const queryClient = new QueryClient({
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
-      // Remove properties not supported in this react-query version
+      // Remove the 'suspense' property as it's not supported in this version of react-query
+      useErrorBoundary: true, // Use error boundary for query errors
     },
   },
 });
