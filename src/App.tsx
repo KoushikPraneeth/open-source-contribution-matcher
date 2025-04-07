@@ -7,25 +7,27 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { HelmetProvider } from "react-helmet-async";
-import Index from "./pages/Index";
-import Landing from "./pages/Landing";
-import SignIn from "./pages/SignIn";
-import SignUp from "./pages/SignUp";
-import Recommendations from "./pages/Recommendations";
-import Contributions from "./pages/Contributions";
-import SavedIssues from "./pages/SavedIssues";
-import SkillsGrowth from "./pages/SkillsGrowth";
-import Community from "./pages/Community";
-import Settings from "./pages/Settings";
-import UserProfile from "./pages/UserProfile";
-import NotFound from "./pages/NotFound";
-import Onboarding from "./pages/Onboarding";
-import AdminDashboard from "./pages/AdminDashboard";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ProtectedRoute from "./components/ProtectedRoute";
 import PageLoading from "./components/PageLoading";
 import OfflineBanner from "./components/OfflineBanner";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { AuthProvider } from "./contexts/AuthContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
+
+// Lazy-loaded pages for better performance
+const Landing = lazy(() => import("./pages/Landing"));
+const SignIn = lazy(() => import("./pages/SignIn"));
+const SignUp = lazy(() => import("./pages/SignUp"));
+const Index = lazy(() => import("./pages/Index"));
+const Recommendations = lazy(() => import("./pages/Recommendations"));
+const Contributions = lazy(() => import("./pages/Contributions"));
+const SavedIssues = lazy(() => import("./pages/SavedIssues"));
+const SkillsGrowth = lazy(() => import("./pages/SkillsGrowth"));
+const Community = lazy(() => import("./pages/Community"));
+const Settings = lazy(() => import("./pages/Settings"));
+const UserProfile = lazy(() => import("./pages/UserProfile"));
+const Onboarding = lazy(() => import("./pages/Onboarding"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Create a fallback error component
 const ErrorFallback = ({ error, resetErrorBoundary }) => {
@@ -62,12 +64,15 @@ const ErrorBoundaryWrapper = ({ children }) => {
   );
 };
 
+// Configure React Query for better performance
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       refetchOnWindowFocus: false,
       retry: 1,
       staleTime: 5 * 60 * 1000, // 5 minutes
+      suspense: false, // Disable suspense mode to prevent flickering
+      useErrorBoundary: true, // Use error boundary for query errors
     },
   },
 });

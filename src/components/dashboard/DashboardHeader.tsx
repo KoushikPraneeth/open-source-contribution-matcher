@@ -1,40 +1,56 @@
 
-import { Button } from "@/components/ui/button";
-import { Search, BookOpen } from "lucide-react";
-import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
+import { Card, CardContent } from '@/components/ui/card';
+import { useAuth } from '@/contexts/AuthContext';
+import { Suspense, lazy } from 'react';
+import { Button } from '@/components/ui/button';
+import { Link } from 'react-router-dom';
+import { Search, PlusCircle } from 'lucide-react';
+import KeyboardShortcutsHelp from '../KeyboardShortcutsHelp';
 
-const DashboardHeader = () => {
-  const navigate = useNavigate();
+// Lazy load GithubConnectionStatus to improve initial load performance
+const GithubConnectionStatus = lazy(() => import('@/components/GithubConnectionStatus'));
+
+export default function DashboardHeader() {
   const { currentUser } = useAuth();
-
+  
   return (
-    <div className="bg-card border-none shadow-sm rounded-lg p-6">
-      <h2 className="text-xl font-semibold mb-2">
-        Welcome Back{currentUser?.username ? `, ${currentUser.username}` : ''}!
-      </h2>
-      <p className="text-muted-foreground mb-4">
-        Ready to start contributing to open source? Let's find the perfect issue for you.
-      </p>
-      <div className="flex flex-wrap gap-2">
-        <Button 
-          className="flex items-center gap-2"
-          onClick={() => navigate('/recommendations')}
-        >
-          <Search className="h-4 w-4" />
-          Find Projects
-        </Button>
-        <Button 
-          variant="outline"
-          className="flex items-center gap-2"
-          onClick={() => navigate('/saved')}
-        >
-          <BookOpen className="h-4 w-4" />
-          Your Saved Items
-        </Button>
-      </div>
-    </div>
+    <Card className="bg-card border-none shadow-sm overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-xl font-medium">
+              Welcome back, {currentUser?.username || 'there'}!
+            </h2>
+            <p className="text-muted-foreground mt-1">
+              {currentUser?.isGithubConnected 
+                ? 'Your GitHub is connected. View your personalized recommendations.'
+                : 'Connect your GitHub to get personalized recommendations.'}
+            </p>
+            
+            <Suspense fallback={<div className="h-6 mt-2" />}>
+              <GithubConnectionStatus />
+            </Suspense>
+          </div>
+          
+          <div className="flex gap-2 flex-wrap">
+            <KeyboardShortcutsHelp />
+            
+            <Link to="/recommendations">
+              <Button variant="outline" size="sm" className="gap-2">
+                <Search className="h-4 w-4" aria-hidden="true" />
+                <span>Find Issues</span>
+              </Button>
+            </Link>
+            
+            <Link to="/contributions">
+              <Button size="sm" className="gap-2">
+                <PlusCircle className="h-4 w-4" aria-hidden="true" />
+                <span>Add Contribution</span>
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
-};
-
-export default DashboardHeader;
+}

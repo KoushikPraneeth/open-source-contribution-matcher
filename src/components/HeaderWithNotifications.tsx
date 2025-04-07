@@ -42,7 +42,7 @@ const HeaderWithNotifications = () => {
   };
   
   return (
-    <header className="border-b bg-background">
+    <header className="border-b bg-background" role="banner">
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-4">
           {isMobile && isAuthenticated && (
@@ -50,10 +50,11 @@ const HeaderWithNotifications = () => {
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" aria-label="Menu">
                   <Menu className="h-5 w-5" />
+                  <span className="sr-only">Open menu</span>
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="w-64">
-                <nav className="flex flex-col gap-4 mt-8">
+                <nav className="flex flex-col gap-4 mt-8" aria-label="Mobile navigation">
                   <Link to="/dashboard" className="text-sm font-medium">Dashboard</Link>
                   <Link to="/recommendations" className="text-sm font-medium">Recommendations</Link>
                   <Link to="/contributions" className="text-sm font-medium">My Contributions</Link>
@@ -80,12 +81,14 @@ const HeaderWithNotifications = () => {
             <>
               {currentUser && !currentUser.isGithubConnected && (
                 <Button 
+                  id="github-connect"
                   variant="outline" 
                   size="sm"
                   className="flex items-center gap-2" 
                   onClick={handleConnectGithub}
+                  aria-label="Connect GitHub account"
                 >
-                  <Github className="h-4 w-4" />
+                  <Github className="h-4 w-4" aria-hidden="true" />
                   Connect GitHub
                 </Button>
               )}
@@ -93,13 +96,13 @@ const HeaderWithNotifications = () => {
               <Button 
                 variant="ghost" 
                 size="icon" 
-                aria-label="Toggle theme" 
+                aria-label={`Toggle to ${theme === 'dark' ? 'light' : 'dark'} theme`}
                 onClick={toggleTheme}
               >
                 {theme === 'dark' ? (
-                  <Sun className="h-5 w-5" />
+                  <Sun className="h-5 w-5" aria-hidden="true" />
                 ) : (
-                  <Moon className="h-5 w-5" />
+                  <Moon className="h-5 w-5" aria-hidden="true" />
                 )}
               </Button>
               
@@ -124,17 +127,17 @@ const HeaderWithNotifications = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link to="/profile" className="flex items-center gap-2 cursor-pointer">
-                      <User className="h-4 w-4" /> Profile
+                      <User className="h-4 w-4" aria-hidden="true" /> Profile
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link to="/settings" className="flex items-center gap-2 cursor-pointer">
-                      <Settings className="h-4 w-4" /> Settings
+                      <Settings className="h-4 w-4" aria-hidden="true" /> Settings
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="flex items-center gap-2 cursor-pointer">
-                    <LogOut className="h-4 w-4" /> Logout
+                    <LogOut className="h-4 w-4" aria-hidden="true" /> Logout
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
