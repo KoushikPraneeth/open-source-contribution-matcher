@@ -1,3 +1,4 @@
+
 import { useEffect, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -119,23 +120,23 @@ const Index = () => {
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div className="md:col-span-2 space-y-6">
-                <div id="dashboard-header">
+                <div className="dashboard-header">
                   <DashboardHeader />
                 </div>
                 
-                <div id="user-stats">
+                <div className="user-stats">
                   <Suspense fallback={<UserStatsSkeleton />}>
                     <UserStats />
                   </Suspense>
                 </div>
                 
-                <div id="recent-activity">
+                <div className="recent-activity">
                   <RecentActivity />
                 </div>
               </div>
               
               <div className="space-y-6">
-                <div id="skills-section">
+                <div className="skills-section">
                   <Suspense fallback={<SkillsSectionSkeleton />}>
                     <SkillsSection />
                   </Suspense>

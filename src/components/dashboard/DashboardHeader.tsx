@@ -28,7 +28,22 @@ export default function DashboardHeader() {
             </p>
             
             <Suspense fallback={<div className="h-6 mt-2" />}>
-              {currentUser && <GithubConnectionStatus user={currentUser} />}
+              {currentUser && (
+                <GithubConnectionStatus 
+                  user={{
+                    ...currentUser,
+                    avatarUrl: currentUser.avatarUrl || '',
+                    githubUrl: currentUser.githubUrl || '',
+                    skills: currentUser.skills || [],
+                    experienceLevel: currentUser.experienceLevel || 'Beginner',
+                    areasOfInterest: currentUser.areasOfInterest || [],
+                    projectTypes: currentUser.projectTypes || [],
+                    contributionGoals: currentUser.contributionGoals || [],
+                    contributions: currentUser.contributions || [],
+                    savedRepositories: currentUser.savedRepositories || []
+                  }} 
+                />
+              )}
             </Suspense>
           </div>
           
