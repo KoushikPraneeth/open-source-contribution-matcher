@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Link } from 'react-router-dom';
 import { Search, PlusCircle } from 'lucide-react';
 import KeyboardShortcutsHelp from '../KeyboardShortcutsHelp';
+import { ExperienceLevel, Repository } from '@/types';
 
 // Lazy load GithubConnectionStatus to improve initial load performance
 const GithubConnectionStatus = lazy(() => import('@/components/GithubConnectionStatus'));
@@ -35,12 +36,15 @@ export default function DashboardHeader() {
                     avatarUrl: currentUser.avatarUrl || '',
                     githubUrl: currentUser.githubUrl || '',
                     skills: currentUser.skills || [],
-                    experienceLevel: currentUser.experienceLevel || 'Beginner',
+                    experienceLevel: currentUser.experienceLevel || ExperienceLevel.Beginner,
                     areasOfInterest: currentUser.areasOfInterest || [],
                     projectTypes: currentUser.projectTypes || [],
                     contributionGoals: currentUser.contributionGoals || [],
                     contributions: currentUser.contributions || [],
-                    savedRepositories: currentUser.savedRepositories || []
+                    savedRepositories: (currentUser.savedRepositories || []).map(repo => ({
+                      ...repo,
+                      repository: repo.repository || {} as Repository
+                    }))
                   }} 
                 />
               )}
