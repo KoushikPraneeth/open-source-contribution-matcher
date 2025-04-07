@@ -1,4 +1,3 @@
-
 import { useEffect, Suspense, lazy } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -112,10 +111,10 @@ const Index = () => {
       <OnboardingTour />
       
       <div className="flex min-h-screen flex-col md:flex-row bg-background">
-        <SideNavigation id="navigation-sidebar" aria-label="Main navigation" />
+        <SideNavigation aria-label="Main navigation" />
         <div className="flex-1">
           <HeaderWithNotifications />
-          <main id="main-content" className="container py-6 px-4 md:px-6" tabIndex={-1} role="main">
+          <main className="container py-6 px-4 md:px-6" tabIndex={-1} role="main">
             <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
